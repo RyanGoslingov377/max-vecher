@@ -1,7 +1,11 @@
 """Тонкая обёртка над Bot API МАКС. Документация: https://dev.max.ru/docs-api"""
+import os
+
 import httpx
 
-BASE_URL = "https://platform-api.max.ru"
+# platform-api2.max.ru из примеров организаторов подписан сертификатом Минцифры,
+# которому Python по умолчанию не доверяет, поэтому по умолчанию берём platform-api.max.ru
+BASE_URL = os.environ.get("MAX_API_URL", "https://platform-api.max.ru")
 
 
 class MaxApi:

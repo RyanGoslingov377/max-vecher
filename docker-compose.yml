@@ -1,0 +1,16 @@
+# Запуск: docker compose up --build  → http://localhost:3000
+# Перед запуском: copy .env.example .env и впиши MAX_BOT_TOKEN
+services:
+  app:
+    build: .
+    env_file: .env
+    environment:
+      DB_PATH: /app/storage/app.db
+    ports:
+      - "3000:3000"
+    volumes:
+      - app-storage:/app/storage
+    restart: unless-stopped
+
+volumes:
+  app-storage:

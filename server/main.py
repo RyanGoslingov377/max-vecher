@@ -27,6 +27,10 @@ WEB_DIR = Path(__file__).resolve().parent.parent / "web"
 async def lifespan(app: FastAPI):
     db.init_db()
     load_events()  # проверяем data/events.json сразу, чтобы ошибка куратора всплыла при запуске
+    if not config.BOT_ENABLED:
+        logging.getLogger("bot").info("Бот выключен (BOT_ENABLED=0), работают только API и мини-приложение")
+        yield
+        return
     api = MaxApi(config.BOT_TOKEN)
     bot_task = asyncio.create_task(run_bot(api))
     yield

@@ -1,10 +1,12 @@
 """SQLite: приглашения в чатах и ответы на них. Файл базы — data/app.db (в git не попадает)."""
+import os
 import sqlite3
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
-DB_PATH = Path(__file__).resolve().parent.parent / "data" / "app.db"
+# В Docker база лежит в отдельном томе (DB_PATH задаёт docker-compose.yml), чтобы переживать пересборку
+DB_PATH = Path(os.environ.get("DB_PATH") or Path(__file__).resolve().parent.parent / "data" / "app.db")
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS invites (
@@ -37,7 +39,7 @@ def connect():
 
 
 def init_db() -> None:
-    DB_PATH.parent.mkdir(exist_ok=True)
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     with connect() as conn:
         conn.executescript(SCHEMA)
 
