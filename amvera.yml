@@ -1,0 +1,13 @@
+# Хостинг Amvera: собирает образ из Dockerfile и держит контейнер запущенным 24/7.
+# Постоянный диск монтируется в /data — там лежит база (DB_PATH в Dockerfile).
+meta:
+  environment: docker
+  toolchain:
+    name: docker
+    version: latest
+build:
+  dockerfile: Dockerfile
+  skip: false
+run:
+  persistenceMount: /data
+  containerPort: 3000

@@ -4,12 +4,10 @@ services:
   app:
     build: .
     env_file: .env
-    environment:
-      DB_PATH: /app/storage/app.db
     ports:
       - "3000:3000"
     volumes:
-      - app-storage:/app/storage
+      - app-storage:/data
     restart: unless-stopped
 
 volumes:
