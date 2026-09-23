@@ -1,7 +1,9 @@
 FROM python:3.12-slim
 
+# База SQLite лежит в /data: на хостинге туда монтируется постоянный диск, в docker compose — том
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    DB_PATH=/data/app.db
 
 WORKDIR /app
 

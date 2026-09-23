@@ -16,7 +16,7 @@
 
 | Файлы | Хозяин |
 | --- | --- |
-| `server/`, `tests/`, `requirements.txt`, `Dockerfile`, `docker-compose.yml`, `.dockerignore`, `.env.example`, `.github/`, `README.md`, `CLAUDE.md`, `.gitignore` | бэкенд |
+| `server/`, `tests/`, `requirements.txt`, `Dockerfile`, `docker-compose.yml`, `amvera.yml`, `.dockerignore`, `.env.example`, `.github/`, `README.md`, `CLAUDE.md`, `.gitignore` | бэкенд |
 | `web/` (включая `web/README.md`), `prototype/` | фронт |
 | `data/events.json` | фронт (задача К1) |
 
@@ -41,7 +41,8 @@
 - Не используй `git push --force`, `git reset --hard`, `git clean`, `git checkout -- .`, `git rebase` и не удаляй файлы без явной просьбы человека. Ошибку исправляем новым коммитом или `git revert`.
 - Перед коммитом проверь `git status`: в коммит не должны попасть `.env`, `.venv/`, `data/app.db`.
 - `.env` не коммитить и не показывать. Токен бота не вставлять в код, логи и сообщения.
-- Бот (long polling) запущен только у бэкенда. У фронта в `.env` стоит `BOT_ENABLED=0`: сервер и API работают без бота, токен не нужен. Два бота с одним токеном делят события случайным образом.
+- Бот (long polling) работает только в одном месте — на хостинге Amvera. Локально у всех `BOT_ENABLED=0`: сервер и API работают без бота, токен не нужен. Два бота с одним токеном делят события случайным образом.
+- Если бэкенду нужно проверить бота локально до сдачи: остановить приложение в Amvera → локально `BOT_ENABLED=1` → проверить → вернуть `BOT_ENABLED=0` → запустить приложение в Amvera. После сдачи 30.09 бота локально не запускаем вообще.
 - Если `git pull` сообщает о конфликте, объясни человеку, что случилось, и разреши конфликт, сохранив изменения обоих.
 
 ## Стек и команды
@@ -51,7 +52,8 @@
 - Запуск: `python -m uvicorn server.main:app --reload --port 3000`. Мини-приложение из `web/` — на http://localhost:3000, API — `/api/...`, документация API — `/docs`.
 - Если порт 3000 занят, сервер уже запущен у человека и с `--reload` сам подхватывает правки в `.py`. Второй экземпляр не запускай.
 - Тесты: `python -m pytest` — перед каждым PR и после каждой правки `data/events.json`.
-- Docker (обязателен по правилам): `docker compose up --build`. База в Docker лежит в томе `app-storage` (`DB_PATH=/app/storage/app.db`).
+- Docker (обязателен по правилам): `docker compose up --build`. В контейнере база лежит в `/data/app.db` (`DB_PATH` задан в `Dockerfile`), в compose это том `app-storage`.
+- Хостинг — Amvera: собирает тот же `Dockerfile` по настройкам из `amvera.yml`, постоянный диск — `/data`, порт 3000. Токен и остальные переменные заданы в интерфейсе Amvera, не в репозитории. Деплоит только бэкенд: после мёрджа в `main` — `git push amvera main:master`.
 
 ## Правила хакатона (FAQ организаторов)
 
