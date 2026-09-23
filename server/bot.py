@@ -3,6 +3,7 @@ import asyncio
 import logging
 import secrets
 
+from . import db
 from .max_api import MaxApi, callback_button
 
 log = logging.getLogger("bot")
@@ -16,10 +17,6 @@ HELP_TEXT = (
 )
 
 ANSWERS = {"going": "Иду", "maybe": "Может", "no": "Не могу"}
-
-# ВРЕМЕННО: карточки и голоса живут в памяти и пропадают при перезапуске.
-# На следующем шаге переедут в SQLite.
-cards: dict[str, dict[int, tuple[str, str]]] = {}  # id карточки -> {user_id: (имя, ответ)}
 
 
 async def run_bot(api: MaxApi) -> None:
@@ -67,35 +64,35 @@ async def handle_update(api: MaxApi, update: dict) -> None:
 
 
 async def send_test_card(api: MaxApi, chat_id: int) -> None:
-    card_id = secrets.token_hex(4)
-    cards[card_id] = {}
-    await api.send_message(chat_id, card_text(card_id), card_buttons(card_id))
+    invite_id = secrets.token_hex(4)
+    db.create_invite(invite_id, chat_id)
+    await api.send_message(chat_id, card_text(invite_id), card_buttons(invite_id))
 
 
 async def on_vote(api: MaxApi, callback: dict) -> None:
-    # payload кнопки выглядит так: "vote:<id карточки>:<ответ>"
+    # payload кнопки выглядит так: "vote:<id приглашения>:<ответ>"
     parts = (callback.get("payload") or "").split(":")
     if len(parts) != 3 or parts[0] != "vote" or parts[2] not in ANSWERS:
         return
-    _, card_id, answer = parts
-    if card_id not in cards:
+    _, invite_id, answer = parts
+    if db.get_invite(invite_id) is None:
         await api.answer_callback(callback["callback_id"], notification="Карточка устарела, пришлите /вечер заново")
         return
 
     user = callback.get("user", {})
     name = user.get("first_name") or user.get("name") or "Кто-то"
-    cards[card_id][user["user_id"]] = (name, answer)
+    db.set_answer(invite_id, user["user_id"], name, answer)
 
     await api.answer_callback(
         callback["callback_id"],
-        text=card_text(card_id),
-        buttons=card_buttons(card_id),
+        text=card_text(invite_id),
+        buttons=card_buttons(invite_id),
         notification=f"Записал: {ANSWERS[answer]}",
     )
 
 
-def card_text(card_id: str) -> str:
-    votes = cards[card_id].values()
+def card_text(invite_id: str) -> str:
+    votes = db.get_answers(invite_id)
     lines = ["Тестовое приглашение", "Проверяем кнопки: нажмите, пойдёте ли вы.", ""]
     for key, label in ANSWERS.items():
         names = [name for name, answer in votes if answer == key]
@@ -103,5 +100,5 @@ def card_text(card_id: str) -> str:
     return "\n".join(lines)
 
 
-def card_buttons(card_id: str) -> list:
-    return [[callback_button(label, f"vote:{card_id}:{key}") for key, label in ANSWERS.items()]]
+def card_buttons(invite_id: str) -> list:
+    return [[callback_button(label, f"vote:{invite_id}:{key}") for key, label in ANSWERS.items()]]
