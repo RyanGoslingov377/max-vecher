@@ -49,6 +49,7 @@ async def handle_update(api: MaxApi, update: dict) -> None:
         if message.get("sender", {}).get("is_bot"):
             return
         chat_id = message["recipient"]["chat_id"]
+        log.info("Сообщение в чате %s", chat_id)  # отсюда берут DEV_CHAT_ID для локальной проверки
         text = (message.get("body", {}).get("text") or "").strip().lower()
         if text.startswith(("/start", "/help")):
             await api.send_message(chat_id, HELP_TEXT)
