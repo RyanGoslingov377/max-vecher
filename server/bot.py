@@ -8,6 +8,7 @@ import httpx
 
 from . import db
 from .events import find_event
+from .followup import on_went
 from .max_api import MaxApi, callback_button, link_button, open_app_button
 from .picker import KAZAN_TZ, starts_at
 
@@ -45,8 +46,13 @@ async def run_bot(api: MaxApi) -> None:
             status["last_poll"] = time.time()
         except asyncio.CancelledError:
             raise
+        except httpx.TransportError as error:
+            # Сеть недоступна (например, контейнер только что запустился) — обычное дело, хватит одной строки
+            log.warning("Нет связи с МАКС (%s), повтор через %s сек", error, RETRY_SECONDS)
+            await asyncio.sleep(RETRY_SECONDS)
+            continue
         except Exception:
-            log.exception("Нет связи с МАКС, повтор через %s сек", RETRY_SECONDS)
+            log.exception("Ошибка при обращении к МАКС, повтор через %s сек", RETRY_SECONDS)
             await asyncio.sleep(RETRY_SECONDS)
             continue
         marker = data.get("marker", marker)
@@ -80,7 +86,11 @@ async def handle_update(api: MaxApi, update: dict) -> None:
         await api.send_message(update["chat_id"], HELP_TEXT)
 
     elif kind == "message_callback":
-        await on_vote(api, update["callback"])
+        callback = update["callback"]
+        if (callback.get("payload") or "").startswith("went:"):
+            await on_went(api, callback)  # ответ на «Сходили?»
+        else:
+            await on_vote(api, callback)
 
 
 async def send_open_app(api: MaxApi, chat_id: int) -> None:

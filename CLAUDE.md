@@ -78,7 +78,8 @@ server/auth.py      проверка подписи МАКС (initData), dev-р�
 server/bot.py       события бота: /help, /вечер (кнопка мини-приложения), /тест, нажатия кнопок, карточки приглашений
 server/picker.py    подбор: MOODS, pick(), resolve_day()
 server/events.py    чтение и проверка data/events.json
-server/db.py        SQLite: invites, rsvps
+server/db.py        SQLite: invites, rsvps, followups, outcomes
+server/followup.py  «Сходили?» после события и метрика
 server/max_api.py   клиент Bot API МАКС
 server/config.py    настройки из .env
 web/                мини-приложение (index.html, styles.css, app.js, api.js)
@@ -96,7 +97,7 @@ tests/              pytest
 | `GET /api/me` | `{user, chat, start_param}` — кто и из какого чата открыл мини-приложение | работает |
 | `POST /api/invites`, тело `{event_id}` | `{invite_id, sent}`; бот шлёт карточку события в чат, из которого открыто мини-приложение (нет чата — в личку с ботом). Кто позвал, сразу записан как «Иду». Ошибки: 404 — нет события, 502 — бот не смог написать в чат | работает |
 | `GET /api/invites/{id}` | `{invite_id, event, answers: [{name, answer}]}` — для живого счётчика, опрашивать раз в 3–5 сек | работает |
-| `GET /api/stats` | `{going, went}` | Б7 |
+| `GET /api/stats` | `{going, went, rate}` — метрика «сходили ÷ собирались», без подписи | работает |
 
 - `mood`: charged, release, exhale, blue, learn, wild. `day`: today, tomorrow, saturday. `answer`: going, maybe, no.
 - `event`: `id`, `title`, `place`, `starts_at` (ISO с `+03:00`) или `"anytime": true`, `price` (₽, 0 — бесплатно), `tags`, `nrg` и `dep` (0–2), `growth`, `why`, необязательный `ticket_url`.
