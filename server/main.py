@@ -5,6 +5,7 @@
 import asyncio
 import logging
 import secrets
+import time
 from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
@@ -16,7 +17,7 @@ from pydantic import BaseModel
 
 from . import config, db
 from .auth import launch_data
-from .bot import run_bot, send_invite
+from .bot import run_bot, send_invite, status as bot_status
 from .events import find_event, load_events
 from .max_api import MaxApi
 from .picker import DAYS, KAZAN_TZ, MOODS, WILD, pick, resolve_day
@@ -55,7 +56,16 @@ app = FastAPI(lifespan=lifespan)
 
 @app.get("/api/health")
 async def health():
-    return {"ok": True}
+    """Жив ли сервер и бот. bot.ok = false — бот давно не получал событий от МАКС: смотрим логи."""
+    last_poll = bot_status["last_poll"]
+    seconds_since_poll = round(time.time() - last_poll) if last_poll else None
+    bot = {
+        "enabled": config.BOT_ENABLED,
+        "username": bot_status["username"],
+        "seconds_since_poll": seconds_since_poll,
+        "ok": seconds_since_poll is not None and seconds_since_poll < 120,  # опрос идёт каждые ≤30 сек
+    }
+    return {"ok": True, "bot": bot}
 
 
 @app.get("/api/pick")

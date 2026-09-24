@@ -2,6 +2,7 @@
 import asyncio
 import logging
 import secrets
+import time
 
 from . import db
 from .events import find_event
@@ -22,18 +23,28 @@ ANSWERS = {"going": "Иду", "maybe": "Может", "no": "Не могу"}
 WEEKDAYS = ["пн", "вт", "ср", "чт", "пт", "сб", "вс"]
 
 
+# Когда бот последний раз успешно получил события от МАКС — показывается в /api/health
+status = {"username": None, "last_poll": None}
+
+RETRY_SECONDS = 5
+
+
 async def run_bot(api: MaxApi) -> None:
-    me = await api.me()
-    log.info("Бот запущен: @%s", me.get("username"))
+    """Бесконечный цикл: любая ошибка связи — запись в лог и повтор, бот никогда не останавливается молча."""
     marker = None
     while True:
         try:
+            if status["username"] is None:
+                me = await api.me()
+                status["username"] = me.get("username")
+                log.info("Бот запущен: @%s", status["username"])
             data = await api.get_updates(marker)
+            status["last_poll"] = time.time()
         except asyncio.CancelledError:
             raise
         except Exception:
-            log.exception("Не удалось получить события, повтор через 3 сек")
-            await asyncio.sleep(3)
+            log.exception("Нет связи с МАКС, повтор через %s сек", RETRY_SECONDS)
+            await asyncio.sleep(RETRY_SECONDS)
             continue
         marker = data.get("marker", marker)
         for update in data.get("updates", []):
