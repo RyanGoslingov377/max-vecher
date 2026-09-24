@@ -108,3 +108,12 @@ def test_card_text_after_votes(client):
     text = bot.card_text(invite_id)
     assert "Иду (1): Тест" in text
     assert "Не могу (1): Петя" in text
+
+
+def test_invite_chat_id_prefers_group_then_payload():
+    from server.main import invite_chat_id
+    assert invite_chat_id({"chat": {"id": -1, "type": "CHAT"}, "start_param": "chat-2"}) == -1
+    assert invite_chat_id({"chat": {"id": 5, "type": "DIALOG"}, "start_param": "chat-2"}) == -2
+    assert invite_chat_id({"start_param": "chat-2"}) == -2
+    assert invite_chat_id({"start_param": "что-то другое"}) is None
+    assert invite_chat_id({}) is None

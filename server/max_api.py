@@ -72,3 +72,8 @@ def callback_button(text: str, payload: str) -> dict:
 
 def link_button(text: str, url: str) -> dict:
     return {"type": "link", "text": text, "url": url}
+
+
+def open_app_button(text: str, bot_username: str, bot_id: int, payload: str) -> dict:
+    """Кнопка открытия мини-приложения бота. payload приходит в мини-приложение как start_param."""
+    return {"type": "open_app", "text": text, "web_app": bot_username, "contact_id": bot_id, "payload": payload}

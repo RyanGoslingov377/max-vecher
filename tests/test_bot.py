@@ -27,7 +27,7 @@ class FlakyApi:
 
 @pytest.fixture(autouse=True)
 def fresh_status(monkeypatch):
-    monkeypatch.setattr(bot, "status", {"username": None, "last_poll": None})
+    monkeypatch.setattr(bot, "status", {"username": None, "user_id": None, "last_poll": None})
     monkeypatch.setattr(bot, "RETRY_SECONDS", 0)
 
 
@@ -52,3 +52,42 @@ def test_health_shows_live_bot(monkeypatch):
     body = TestClient(app).get("/api/health").json()
     assert body["bot"]["ok"] is True
     assert body["bot"]["username"] == "test_bot"
+
+
+class RecordingApi:
+    """Запоминает отправленные сообщения; может отклонить первое, как МАКС отклонил бы кнопку."""
+
+    def __init__(self, reject_first: bool = False):
+        self.sent = []
+        self.reject_first = reject_first
+
+    async def send_message(self, chat_id, text, buttons=None, *, user_id=None):
+        if self.reject_first and not self.sent:
+            self.sent.append(None)
+            request = httpx.Request("POST", "https://platform-api.max.ru/messages")
+            raise httpx.HTTPStatusError("400", request=request, response=httpx.Response(400, request=request))
+        self.sent.append({"chat_id": chat_id, "text": text, "buttons": buttons})
+        return {}
+
+
+def evening_update(chat_id: int) -> dict:
+    return {"update_type": "message_created",
+            "message": {"sender": {"user_id": 7}, "recipient": {"chat_id": chat_id}, "body": {"text": "/вечер"}}}
+
+
+def test_evening_command_sends_open_app_button(monkeypatch):
+    monkeypatch.setattr(bot, "status", {"username": "test_bot", "user_id": 99, "last_poll": None})
+    api = RecordingApi()
+    asyncio.run(bot.handle_update(api, evening_update(-123)))
+    [button] = api.sent[0]["buttons"][0]
+    assert button == {"type": "open_app", "text": "Подобрать вечер", "web_app": "test_bot",
+                      "contact_id": 99, "payload": "chat-123"}
+
+
+def test_evening_falls_back_to_deeplink(monkeypatch):
+    monkeypatch.setattr(bot, "status", {"username": "test_bot", "user_id": 99, "last_poll": None})
+    api = RecordingApi(reject_first=True)
+    asyncio.run(bot.handle_update(api, evening_update(-123)))
+    [button] = api.sent[1]["buttons"][0]
+    assert button["type"] == "link"
+    assert button["url"] == "https://max.ru/test_bot?startapp=chat-123"
