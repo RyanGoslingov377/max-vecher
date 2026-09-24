@@ -35,8 +35,12 @@ class MaxApi:
             params["marker"] = marker
         return await self._call("GET", "/updates", params=params)
 
-    async def send_message(self, chat_id: int, text: str, buttons: list | None = None) -> dict:
-        return await self._call("POST", "/messages", params={"chat_id": chat_id}, json=message_body(text, buttons))
+    async def send_message(
+        self, chat_id: int | None, text: str, buttons: list | None = None, *, user_id: int | None = None
+    ) -> dict:
+        """В групповой чат — по chat_id, в личку с ботом — по user_id."""
+        params = {"chat_id": chat_id} if chat_id else {"user_id": user_id}
+        return await self._call("POST", "/messages", params=params, json=message_body(text, buttons))
 
     async def answer_callback(
         self,

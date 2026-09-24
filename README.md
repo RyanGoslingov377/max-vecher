@@ -11,6 +11,7 @@
 - Подбор событий: http://localhost:3000/api/pick?mood=charged&day=saturday&budget=1
   - `mood`: charged, release, exhale, blue, learn, wild
   - `day`: today, tomorrow, saturday
+- `POST /api/invites` — позвать друзей: бот присылает в чат карточку события с кнопками «Иду / Может / Не могу». `GET /api/invites/{id}` — кто что ответил.
 - `GET /api/me` — кто открыл мини-приложение. Подпись МАКС проверяется на сервере, без неё — ошибка 401.
 - В `data/events.json` пока **выдуманные примеры** событий — их заменят на реальные (задача К1).
 

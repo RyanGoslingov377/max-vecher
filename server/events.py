@@ -36,3 +36,7 @@ def check_event(event: dict) -> None:
         datetime.fromisoformat(event["starts_at"])  # упадёт, если дата записана неправильно
     elif not event.get("anytime"):
         raise ValueError(f"Событие {name}: нужна дата starts_at или \"anytime\": true")
+
+
+def find_event(event_id: str) -> dict | None:
+    return next((event for event in load_events() if event["id"] == event_id), None)
