@@ -105,6 +105,36 @@ tests/              pytest
 - `/api/me` и все `/api/invites` идут с заголовком `X-Max-Init-Data: <window.WebApp.initData>`. Без заголовка или с неверной подписью — 401. При `DEV_AUTH=1` сервер без заголовка подставляет тестового пользователя `{id: 1, first_name: "Тест"}` и чат из `DEV_CHAT_ID` (только локально). Проверка — `server/auth.py`.
 - id чата фронт не передаёт: сервер берёт его из подписанных данных МАКС — групповой `chat`, а если его нет, то `start_param` вида `chat<id>`, который кладёт кнопка «Подобрать вечер» (`/вечер` в боте). Нет ни того, ни другого — приглашение уходит в личку с ботом.
 
+## Фронт ↔ бэк: как подключить
+
+Отдельно «соединять» ничего не нужно: мини-приложение из `web/` раздаёт тот же сервер, что и API, поэтому адреса относительные (`/api/...`) и работают и локально, и на хостинге. Все адреса контракта уже работают. После мёрджа в `main` Amvera сама выкладывает новую версию, и она сразу видна в МАКС.
+
+```js
+// web/api.js — все запросы к серверу (подключать как <script type="module">)
+const initData = () => window.WebApp?.initData || "";
+
+async function request(path, options = {}) {
+  const headers = { ...(options.headers || {}) };
+  if (initData()) headers["X-Max-Init-Data"] = initData();  // подпись МАКС: без неё /api/me и /api/invites отвечают 401
+  if (options.body) headers["Content-Type"] = "application/json";
+  const res = await fetch(path, { ...options, headers });
+  if (!res.ok) throw new Error((await res.json().catch(() => ({}))).detail || `Ошибка ${res.status}`);
+  return res.json();
+}
+
+export const getPick = (mood, day, budget) => request(`/api/pick?mood=${mood}&day=${day}&budget=${budget ? 1 : 0}`);
+export const getMe = () => request("/api/me");
+export const createInvite = (eventId) =>
+  request("/api/invites", { method: "POST", body: JSON.stringify({ event_id: eventId }) });
+export const getInvite = (inviteId) => request(`/api/invites/${inviteId}`);
+```
+
+- В `web/index.html` до своих скриптов: `<script src="https://st.max.ru/js/max-web-app.js"></script>`, при запуске — `window.WebApp?.ready()`.
+- Ошибки сервера приходят как `{"detail": "текст по-русски"}` — его можно показать пользователю как есть.
+- Локально в обычном браузере `window.WebApp` нет — в `.env` ставим `DEV_AUTH=1`, и сервер пускает тестового пользователя.
+- Живой счётчик на экране «План»: после `createInvite` опрашивать `getInvite(id)` раз в 3–5 секунд, пока экран открыт.
+- Проверка внутри МАКС после мёрджа: написать боту `/вечер` → «Подобрать вечер» → пройти сценарий → карточка приходит в этот же чат.
+
 ## МАКС: что проверено
 
 - Bot API: `https://platform-api.max.ru`, заголовок `Authorization: <токен>`. Документация: https://dev.max.ru/docs-api
