@@ -4,27 +4,29 @@ import logging
 import secrets
 import time
 
+import httpx
+
 from . import db
 from .events import find_event
-from .max_api import MaxApi, callback_button, link_button
+from .max_api import MaxApi, callback_button, link_button, open_app_button
 from .picker import KAZAN_TZ, starts_at
 
 log = logging.getLogger("bot")
 
 HELP_TEXT = (
-    "Привет! Я помогаю выбрать вечер по настроению и собрать друзей.\n\n"
-    "Сейчас я в тестовом режиме. Команды:\n"
-    "/вечер — прислать тестовую карточку «Иду / Может / Не могу»\n"
+    "Привет! Я помогаю выбрать вечер по настроению и позвать друзей.\n\n"
+    "/вечер — подобрать вечер: откроется мини-приложение\n"
     "/help — эта подсказка\n\n"
     "В групповом чате сделайте меня администратором, иначе я не увижу команды."
 )
+EVENING_TEXT = "Выберите настроение — я подберу три события, а позвать друзей можно одной кнопкой."
 
 ANSWERS = {"going": "Иду", "maybe": "Может", "no": "Не могу"}
 WEEKDAYS = ["пн", "вт", "ср", "чт", "пт", "сб", "вс"]
 
 
 # Когда бот последний раз успешно получил события от МАКС — показывается в /api/health
-status = {"username": None, "last_poll": None}
+status = {"username": None, "user_id": None, "last_poll": None}
 
 RETRY_SECONDS = 5
 
@@ -37,6 +39,7 @@ async def run_bot(api: MaxApi) -> None:
             if status["username"] is None:
                 me = await api.me()
                 status["username"] = me.get("username")
+                status["user_id"] = me.get("user_id")
                 log.info("Бот запущен: @%s", status["username"])
             data = await api.get_updates(marker)
             status["last_poll"] = time.time()
@@ -68,7 +71,9 @@ async def handle_update(api: MaxApi, update: dict) -> None:
         if text.startswith(("/start", "/help")):
             await api.send_message(chat_id, HELP_TEXT)
         elif text.startswith(("/вечер", "/vecher")):
-            await send_test_card(api, chat_id)
+            await send_open_app(api, chat_id)
+        elif text.startswith("/тест"):
+            await send_test_card(api, chat_id)  # служебная команда: проверить кнопки без мини-приложения
 
     elif kind in ("bot_started", "bot_added"):
         # bot_started — нажали «Начать» в личке, bot_added — бота добавили в группу
@@ -76,6 +81,19 @@ async def handle_update(api: MaxApi, update: dict) -> None:
 
     elif kind == "message_callback":
         await on_vote(api, update["callback"])
+
+
+async def send_open_app(api: MaxApi, chat_id: int) -> None:
+    """Кнопка, которая открывает мини-приложение. В payload — чат, куда потом слать приглашения."""
+    payload = f"chat{chat_id}"
+    button = open_app_button("Подобрать вечер", status["username"], status["user_id"], payload)
+    try:
+        await api.send_message(chat_id, EVENING_TEXT, [[button]])
+    except httpx.HTTPStatusError as error:
+        # Запасной путь: обычная ссылка-диплинк тоже открывает мини-приложение с тем же payload
+        log.warning("МАКС не принял кнопку open_app (%s), шлю ссылку", error.response.status_code)
+        link = f"https://max.ru/{status['username']}?startapp={payload}"
+        await api.send_message(chat_id, EVENING_TEXT, [[link_button("Подобрать вечер", link)]])
 
 
 async def send_test_card(api: MaxApi, chat_id: int) -> None:

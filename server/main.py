@@ -4,6 +4,7 @@
 """
 import asyncio
 import logging
+import re
 import secrets
 import time
 from contextlib import asynccontextmanager
@@ -91,13 +92,22 @@ class InviteIn(BaseModel):
     event_id: str
 
 
+def invite_chat_id(launch: dict) -> int | None:
+    """Куда слать приглашение: групповой чат из данных МАКС, иначе чат из payload кнопки /вечер."""
+    chat = launch.get("chat") or {}
+    if chat.get("id") and chat.get("type") != "DIALOG":
+        return chat["id"]
+    match = re.fullmatch(r"chat(-?\d+)", str(launch.get("start_param") or ""))
+    return int(match.group(1)) if match else None  # None — пришлём в личку с ботом
+
+
 @app.post("/api/invites")
 async def api_create_invite(body: InviteIn, launch: dict = Depends(launch_data)):
     """Позвать друзей: бот присылает карточку события в чат, из которого открыто мини-приложение."""
     if find_event(body.event_id) is None:
         raise HTTPException(404, "Нет такого события")
     user = launch.get("user") or {}
-    chat_id = (launch.get("chat") or {}).get("id")
+    chat_id = invite_chat_id(launch)
     user_id = user.get("id")
     if not chat_id and not user_id:
         raise HTTPException(400, "Не понятно, куда отправить приглашение")
