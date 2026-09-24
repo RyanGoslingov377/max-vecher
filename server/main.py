@@ -20,6 +20,7 @@ from . import config, db
 from .auth import launch_data
 from .bot import run_bot, send_invite, status as bot_status
 from .events import find_event, load_events
+from .followup import run_followups
 from .max_api import MaxApi
 from .picker import DAYS, KAZAN_TZ, MOODS, WILD, pick, resolve_day
 
@@ -40,14 +41,15 @@ async def lifespan(app: FastAPI):
     # Отправлять сообщения можно и без long polling, поэтому клиент есть везде, где есть токен
     api = MaxApi(config.BOT_TOKEN) if config.BOT_TOKEN else None
     app.state.max_api = api
-    bot_task = None
+    tasks = []
     if config.BOT_ENABLED:
-        bot_task = asyncio.create_task(run_bot(api))
+        # «Сходили?» рассылает только тот, у кого запущен бот, — иначе вопросы задублируются
+        tasks = [asyncio.create_task(run_bot(api)), asyncio.create_task(run_followups(api))]
     else:
         logging.getLogger("bot").info("Бот выключен (BOT_ENABLED=0), работают только API и мини-приложение")
     yield
-    if bot_task:
-        bot_task.cancel()
+    for task in tasks:
+        task.cancel()
     if api:
         await api.close()
 
@@ -139,5 +141,12 @@ async def api_get_invite(invite_id: str, launch: dict = Depends(launch_data)):
     return {"invite_id": invite_id, "event": event, "answers": answers}
 
 
-# Всё остальное — файлы мини-приложения из папки web/
+@app.get("/api/stats")
+async def api_stats():
+    """Главная метрика: доля выбранных вечеров, которые состоялись (сходили ÷ собирались)."""
+    going, went = db.stats()
+    return {"going": going, "went": went, "rate": round(went / going, 2) if going else None}
+
+
+# Всё остальное — файлы мини-приложения из папки web/. Этот mount должен быть последним
 app.mount("/", StaticFiles(directory=WEB_DIR, html=True), name="web")
