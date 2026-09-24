@@ -8,10 +8,11 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 
 from . import config, db
+from .auth import launch_data
 from .bot import run_bot
 from .events import load_events
 from .max_api import MaxApi
@@ -25,6 +26,10 @@ WEB_DIR = Path(__file__).resolve().parent.parent / "web"
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    if config.BOT_ENABLED and not config.BOT_TOKEN:
+        raise SystemExit("Нет MAX_BOT_TOKEN: впиши токен в .env или поставь BOT_ENABLED=0, чтобы запустить сервер без бота")
+    if config.DEV_AUTH:
+        logging.getLogger("auth").warning("DEV_AUTH=1: запросы без подписи МАКС пускаются. Только для локальной разработки!")
     db.init_db()
     load_events()  # проверяем data/events.json сразу, чтобы ошибка куратора всплыла при запуске
     if not config.BOT_ENABLED:
@@ -57,6 +62,12 @@ async def api_pick(mood: str, day: str = "today", budget: bool = False):
     target_day = resolve_day(day, now)
     results = pick(load_events(), mood, target_day, budget_on=budget, now=now)
     return {"mood": mood, "day": target_day.isoformat(), "budget": budget, "results": results}
+
+
+@app.get("/api/me")
+async def api_me(launch: dict = Depends(launch_data)):
+    """Кто и из какого чата открыл мини-приложение. Нужен заголовок X-Max-Init-Data."""
+    return {"user": launch.get("user"), "chat": launch.get("chat"), "start_param": launch.get("start_param")}
 
 
 # Всё остальное — файлы мини-приложения из папки web/

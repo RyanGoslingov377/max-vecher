@@ -53,7 +53,7 @@
 - Если порт 3000 занят, сервер уже запущен у человека и с `--reload` сам подхватывает правки в `.py`. Второй экземпляр не запускай.
 - Тесты: `python -m pytest` — перед каждым PR и после каждой правки `data/events.json`.
 - Docker (обязателен по правилам): `docker compose up --build`. В контейнере база лежит в `/data/app.db` (`DB_PATH` задан в `Dockerfile`), в compose это том `app-storage`.
-- Хостинг — Amvera: собирает тот же `Dockerfile` по настройкам из `amvera.yml`, постоянный диск — `/data`, порт 3000. Токен и остальные переменные заданы в интерфейсе Amvera, не в репозитории. Деплоит только бэкенд: после мёрджа в `main` — `git push amvera main:master`.
+- Хостинг — Amvera: собирает тот же `Dockerfile` по настройкам из `amvera.yml`, постоянный диск — `/data`, порт 3000. Токен и остальные переменные заданы в интерфейсе Amvera, не в репозитории. Адрес: https://max-vecher-gosuslugov233.amvera.io/ (он же отправлен организаторам как адрес мини-приложения). Amvera подключена к GitHub и сама забирает `main` после мёрджа; если новая версия не появилась — бэкенд жмёт пересборку в интерфейсе Amvera.
 
 ## Правила хакатона (FAQ организаторов)
 
@@ -74,6 +74,7 @@
 
 ```
 server/main.py      FastAPI: API + раздача web/, бот в фоне
+server/auth.py      проверка подписи МАКС (initData), dev-режим
 server/bot.py       события бота: /help, /вечер, нажатия кнопок
 server/picker.py    подбор: MOODS, pick(), resolve_day()
 server/events.py    чтение и проверка data/events.json
@@ -92,14 +93,14 @@ tests/              pytest
 | Метод и адрес | Ответ | Статус |
 | --- | --- | --- |
 | `GET /api/pick?mood=&day=&budget=0\|1` | `{mood, day, budget, results: [{event, mood, score, over_budget}]}` | работает |
-| `GET /api/me` | `{user, chat}` — кто и из какого чата открыл мини-приложение | Б4 |
+| `GET /api/me` | `{user, chat, start_param}` — кто и из какого чата открыл мини-приложение | работает |
 | `POST /api/invites`, тело `{event_id}` | `{invite_id}`; бот шлёт карточку в чат, из которого открыто мини-приложение | Б5 |
 | `GET /api/invites/{id}` | `{event, answers: [{name, answer}]}` | Б5 |
 | `GET /api/stats` | `{going, went}` | Б7 |
 
 - `mood`: charged, release, exhale, blue, learn, wild. `day`: today, tomorrow, saturday. `answer`: going, maybe, no.
 - `event`: `id`, `title`, `place`, `starts_at` (ISO с `+03:00`) или `"anytime": true`, `price` (₽, 0 — бесплатно), `tags`, `nrg` и `dep` (0–2), `growth`, `why`, необязательный `ticket_url`.
-- POST-запросы и `/api/me` идут с заголовком `X-Max-Init-Data: <window.WebApp.initData>`. При `DEV_AUTH=1` сервер без заголовка подставляет тестового пользователя (только локально).
+- POST-запросы и `/api/me` идут с заголовком `X-Max-Init-Data: <window.WebApp.initData>`. Без заголовка или с неверной подписью — 401. При `DEV_AUTH=1` сервер без заголовка подставляет тестового пользователя `{id: 1, first_name: "Тест"}` и чат из `DEV_CHAT_ID` (только локально). Проверка — `server/auth.py`.
 - id чата фронт не передаёт: сервер берёт его из подписанных данных МАКС.
 
 ## МАКС: что проверено
