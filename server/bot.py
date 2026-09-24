@@ -4,7 +4,9 @@ import logging
 import secrets
 
 from . import db
-from .max_api import MaxApi, callback_button
+from .events import find_event
+from .max_api import MaxApi, callback_button, link_button
+from .picker import KAZAN_TZ, starts_at
 
 log = logging.getLogger("bot")
 
@@ -17,6 +19,7 @@ HELP_TEXT = (
 )
 
 ANSWERS = {"going": "Иду", "maybe": "Может", "no": "Не могу"}
+WEEKDAYS = ["пн", "вт", "ср", "чт", "пт", "сб", "вс"]
 
 
 async def run_bot(api: MaxApi) -> None:
@@ -92,9 +95,34 @@ async def on_vote(api: MaxApi, callback: dict) -> None:
     )
 
 
+async def send_invite(api: MaxApi, invite_id: str, *, chat_id: int | None, user_id: int | None) -> None:
+    """Карточка приглашения на событие: в групповой чат, а если чата нет — в личку с ботом."""
+    await api.send_message(chat_id, card_text(invite_id), card_buttons(invite_id), user_id=user_id)
+
+
+def invite_event(invite_id: str) -> dict | None:
+    invite = db.get_invite(invite_id)
+    return find_event(invite["event_id"]) if invite and invite["event_id"] else None
+
+
+def event_lines(event: dict) -> list[str]:
+    start = starts_at(event)
+    if start:
+        start = start.astimezone(KAZAN_TZ)
+        when = f"{WEEKDAYS[start.weekday()]} {start:%d.%m, %H:%M}"
+    else:
+        when = "в любое время"
+    price = f"{event['price']} ₽" if event["price"] else "бесплатно"
+    return [event["title"], f"{when} · {event['place']} · {price}", event["why"]]
+
+
 def card_text(invite_id: str) -> str:
+    event = invite_event(invite_id)
+    if event:
+        lines = [*event_lines(event), "", "Кто идёт?"]
+    else:
+        lines = ["Тестовое приглашение", "Проверяем кнопки: нажмите, пойдёте ли вы.", ""]
     votes = db.get_answers(invite_id)
-    lines = ["Тестовое приглашение", "Проверяем кнопки: нажмите, пойдёте ли вы.", ""]
     for key, label in ANSWERS.items():
         names = [name for name, answer in votes if answer == key]
         lines.append(f"{label} ({len(names)})" + (": " + ", ".join(names) if names else ""))
@@ -102,4 +130,8 @@ def card_text(invite_id: str) -> str:
 
 
 def card_buttons(invite_id: str) -> list:
-    return [[callback_button(label, f"vote:{invite_id}:{key}") for key, label in ANSWERS.items()]]
+    rows = [[callback_button(label, f"vote:{invite_id}:{key}") for key, label in ANSWERS.items()]]
+    event = invite_event(invite_id)
+    if event and event.get("ticket_url"):
+        rows.append([link_button("Билеты", event["ticket_url"])])
+    return rows
