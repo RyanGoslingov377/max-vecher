@@ -3,6 +3,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from server import bot, config, db, events
+from server.auth import launch_data
 from server.main import app
 
 EVENTS = [
@@ -59,13 +60,25 @@ def test_invite_goes_to_chat_with_event_card(client, api):
     assert message["buttons"][1][0]["url"] == "https://example.com/tickets"
 
 
-def test_invite_without_chat_goes_to_private_dialog(client, api, monkeypatch):
-    monkeypatch.setattr(config, "DEV_CHAT_ID", None)
-    client.post("/api/invites", json={"event_id": "walk"})
+def test_invite_without_chat_goes_to_private_dialog(client, api):
+    # Настоящий пользователь МАКС, открыл приложение не из группы
+    app.dependency_overrides[launch_data] = lambda: {"user": {"id": 5, "first_name": "Аня"}, "chat": None}
+    try:
+        client.post("/api/invites", json={"event_id": "walk"})
+    finally:
+        app.dependency_overrides.clear()
     [message] = api.sent
     assert message["chat_id"] is None
-    assert message["user_id"] == 1
+    assert message["user_id"] == 5
     assert "в любое время · Центр · бесплатно" in message["text"]
+
+
+def test_dev_user_without_chat_gets_nothing_sent(client, api, monkeypatch):
+    # Тестового пользователя с id 1 не существует — в личку ему не пишем
+    monkeypatch.setattr(config, "DEV_CHAT_ID", None)
+    body = client.post("/api/invites", json={"event_id": "walk"}).json()
+    assert body["sent"] is False
+    assert api.sent == []
 
 
 def test_unknown_event_is_404(client):

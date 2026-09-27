@@ -149,6 +149,8 @@ def event_lines(event: dict) -> list[str]:
     if start:
         start = start.astimezone(KAZAN_TZ)
         when = f"{WEEKDAYS[start.weekday()]} {start:%d.%m, %H:%M}"
+    elif event.get("weekly"):
+        when = f"по {', '.join(event['weekly']['days'])} в {event['weekly']['time']}"
     else:
         when = "в любое время"
     price = f"{event['price']} ₽" if event["price"] else "бесплатно"
