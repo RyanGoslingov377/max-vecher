@@ -1,0 +1,783 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Вечер по настроению — API",
+    "description": "API мини-приложения для МАКС: подбор событий под настроение, приглашения друзей в чат и метрика «сходили ÷ собирались». Рабочий адрес: https://max-vecher-gosuslugov233.amvera.io. Адреса /api/me и /api/invites требуют заголовок X-Max-Init-Data — подпись МАКС, которую мини-приложение получает при запуске (window.WebApp.initData).",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/health": {
+      "get": {
+        "tags": [
+          "служебное"
+        ],
+        "summary": "Health",
+        "description": "Жив ли сервер и бот. bot.ok = false — бот давно не получал событий от МАКС: смотрим логи.",
+        "operationId": "health_api_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthOut"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/pick": {
+      "get": {
+        "tags": [
+          "подбор"
+        ],
+        "summary": "Api Pick",
+        "description": "Три события под настроение. Пример: /api/pick?mood=charged&day=saturday&budget=1",
+        "operationId": "api_pick_api_pick_get",
+        "parameters": [
+          {
+            "name": "mood",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Mood"
+            }
+          },
+          {
+            "name": "day",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "today",
+              "title": "Day"
+            }
+          },
+          {
+            "name": "budget",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Budget"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PickOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Неизвестное настроение или день"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/me": {
+      "get": {
+        "tags": [
+          "пользователь"
+        ],
+        "summary": "Api Me",
+        "description": "Кто и из какого чата открыл мини-приложение. Нужен заголовок X-Max-Init-Data.",
+        "operationId": "api_me_api_me_get",
+        "parameters": [
+          {
+            "name": "x-max-init-data",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Max-Init-Data"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нет подписи МАКС (X-Max-Init-Data) или она неверна"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/invites": {
+      "post": {
+        "tags": [
+          "приглашения"
+        ],
+        "summary": "Api Create Invite",
+        "description": "Позвать друзей: бот присылает карточку события в чат, из которого открыто мини-приложение.",
+        "operationId": "api_create_invite_api_invites_post",
+        "parameters": [
+          {
+            "name": "x-max-init-data",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Max-Init-Data"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InviteIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InviteCreated"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нет подписи МАКС (X-Max-Init-Data) или она неверна"
+          },
+          "404": {
+            "description": "Нет такого события"
+          },
+          "502": {
+            "description": "Бот не смог написать в чат (не добавлен или не администратор)"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/invites/{invite_id}": {
+      "get": {
+        "tags": [
+          "приглашения"
+        ],
+        "summary": "Api Get Invite",
+        "description": "Событие и ответы друзей — для живого счётчика в мини-приложении.",
+        "operationId": "api_get_invite_api_invites__invite_id__get",
+        "parameters": [
+          {
+            "name": "invite_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Invite Id"
+            }
+          },
+          {
+            "name": "x-max-init-data",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Max-Init-Data"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InviteOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нет подписи МАКС (X-Max-Init-Data) или она неверна"
+          },
+          "404": {
+            "description": "Нет такого приглашения"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stats": {
+      "get": {
+        "tags": [
+          "метрика"
+        ],
+        "summary": "Api Stats",
+        "description": "Главная метрика: доля выбранных вечеров, которые состоялись (сходили ÷ собирались).",
+        "operationId": "api_stats_api_stats_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatsOut"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Answer": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "answer": {
+            "type": "string",
+            "title": "Answer",
+            "description": "going / maybe / no"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "answer"
+        ],
+        "title": "Answer"
+      },
+      "BotHealth": {
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled"
+          },
+          "username": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Username"
+          },
+          "seconds_since_poll": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seconds Since Poll",
+            "description": "Сколько секунд назад бот последний раз получил события"
+          },
+          "ok": {
+            "type": "boolean",
+            "title": "Ok",
+            "description": "false — бот больше 2 минут не получал событий от МАКС"
+          }
+        },
+        "type": "object",
+        "required": [
+          "enabled",
+          "username",
+          "seconds_since_poll",
+          "ok"
+        ],
+        "title": "BotHealth"
+      },
+      "Event": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "id события; у регулярного в конкретный день — вида quiz@2026-10-02"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "place": {
+            "type": "string",
+            "title": "Place"
+          },
+          "starts_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Starts At",
+            "description": "Начало, ISO 8601 с +03:00. Нет — событие «в любое время»"
+          },
+          "anytime": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Anytime",
+            "description": "true — можно прийти в любое время"
+          },
+          "weekly": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Weekly"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Расписание регулярного события"
+          },
+          "price": {
+            "type": "integer",
+            "title": "Price",
+            "description": "Цена в рублях, 0 — бесплатно"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags"
+          },
+          "nrg": {
+            "type": "integer",
+            "title": "Nrg",
+            "description": "Энергия 0–2: 0 — тихо, 2 — громко и активно"
+          },
+          "dep": {
+            "type": "integer",
+            "title": "Dep",
+            "description": "Глубина 0–2: 0 — легко, 2 — сильно трогает"
+          },
+          "growth": {
+            "type": "boolean",
+            "title": "Growth",
+            "description": "Событие для настроения «Узнать новое»"
+          },
+          "why": {
+            "type": "string",
+            "title": "Why",
+            "description": "Почему подходит — короткая фраза для карточки"
+          },
+          "ticket_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ticket Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "place",
+          "price",
+          "tags",
+          "nrg",
+          "dep",
+          "growth",
+          "why"
+        ],
+        "title": "Event"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthOut": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "title": "Ok"
+          },
+          "bot": {
+            "$ref": "#/components/schemas/BotHealth"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ok",
+          "bot"
+        ],
+        "title": "HealthOut"
+      },
+      "InviteCreated": {
+        "properties": {
+          "invite_id": {
+            "type": "string",
+            "title": "Invite Id"
+          },
+          "sent": {
+            "type": "boolean",
+            "title": "Sent",
+            "description": "false — приглашение сохранено, но бот карточку не отправлял (локальный запуск)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "invite_id",
+          "sent"
+        ],
+        "title": "InviteCreated"
+      },
+      "InviteIn": {
+        "properties": {
+          "event_id": {
+            "type": "string",
+            "title": "Event Id",
+            "description": "id события из /api/pick"
+          }
+        },
+        "type": "object",
+        "required": [
+          "event_id"
+        ],
+        "title": "InviteIn"
+      },
+      "InviteOut": {
+        "properties": {
+          "invite_id": {
+            "type": "string",
+            "title": "Invite Id"
+          },
+          "event": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Event"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "answers": {
+            "items": {
+              "$ref": "#/components/schemas/Answer"
+            },
+            "type": "array",
+            "title": "Answers"
+          }
+        },
+        "type": "object",
+        "required": [
+          "invite_id",
+          "answers"
+        ],
+        "title": "InviteOut"
+      },
+      "MeOut": {
+        "properties": {
+          "user": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User",
+            "description": "Пользователь МАКС: id, first_name, …"
+          },
+          "chat": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chat",
+            "description": "Чат, из которого открыто мини-приложение: id, type"
+          },
+          "start_param": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Param",
+            "description": "payload кнопки, которой открыли приложение"
+          }
+        },
+        "type": "object",
+        "title": "MeOut"
+      },
+      "PickOut": {
+        "properties": {
+          "mood": {
+            "type": "string",
+            "title": "Mood"
+          },
+          "day": {
+            "type": "string",
+            "title": "Day",
+            "description": "Дата, на которую подобрано, YYYY-MM-DD"
+          },
+          "budget": {
+            "type": "boolean",
+            "title": "Budget"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/PickResult"
+            },
+            "type": "array",
+            "title": "Results",
+            "description": "До трёх событий, лучшее — первое"
+          }
+        },
+        "type": "object",
+        "required": [
+          "mood",
+          "day",
+          "budget",
+          "results"
+        ],
+        "title": "PickOut"
+      },
+      "PickResult": {
+        "properties": {
+          "event": {
+            "$ref": "#/components/schemas/Event"
+          },
+          "mood": {
+            "type": "string",
+            "title": "Mood",
+            "description": "Настроение, под которое подобрано (в «Удиви меня» у каждого своё)"
+          },
+          "score": {
+            "type": "number",
+            "title": "Score",
+            "description": "Расстояние до настроения по осям: чем меньше, тем лучше"
+          },
+          "over_budget": {
+            "type": "boolean",
+            "title": "Over Budget",
+            "description": "Дороже 300 ₽ при включённом «Бюджет поджимает»"
+          }
+        },
+        "type": "object",
+        "required": [
+          "event",
+          "mood",
+          "score",
+          "over_budget"
+        ],
+        "title": "PickResult"
+      },
+      "StatsOut": {
+        "properties": {
+          "going": {
+            "type": "integer",
+            "title": "Going",
+            "description": "Сколько человек собирались (по приглашениям, где уже спросили «Сходили?»)"
+          },
+          "went": {
+            "type": "integer",
+            "title": "Went",
+            "description": "Сколько ответили «Сходил(а)»"
+          },
+          "rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rate",
+            "description": "went ÷ going — главная метрика продукта"
+          }
+        },
+        "type": "object",
+        "required": [
+          "going",
+          "went",
+          "rate"
+        ],
+        "title": "StatsOut"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "Weekly": {
+        "properties": {
+          "days": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Days",
+            "description": "Дни недели: пн, вт, ср, чт, пт, сб, вс"
+          },
+          "time": {
+            "type": "string",
+            "title": "Time",
+            "description": "Время начала, например 20:00"
+          }
+        },
+        "type": "object",
+        "required": [
+          "days",
+          "time"
+        ],
+        "title": "Weekly"
+      }
+    }
+  }
+}

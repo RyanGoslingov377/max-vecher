@@ -14,7 +14,6 @@ from pathlib import Path
 import httpx
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
 
 from . import config, db
 from .auth import launch_data
@@ -23,6 +22,7 @@ from .events import find_event, load_events
 from .followup import run_followups
 from .max_api import MaxApi
 from .picker import DAYS, KAZAN_TZ, MOODS, WILD, pick, resolve_day
+from .schemas import HealthOut, InviteCreated, InviteIn, InviteOut, MeOut, PickOut, StatsOut
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s: %(message)s")
 logging.getLogger("httpx").setLevel(logging.WARNING)  # иначе каждые 30 сек строка про long polling
@@ -54,10 +54,22 @@ async def lifespan(app: FastAPI):
         await api.close()
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    lifespan=lifespan,
+    title="Вечер по настроению — API",
+    version="1.0.0",
+    description=(
+        "API мини-приложения для МАКС: подбор событий под настроение, приглашения друзей в чат "
+        "и метрика «сходили ÷ собирались». Рабочий адрес: https://max-vecher-gosuslugov233.amvera.io. "
+        "Адреса /api/me и /api/invites требуют заголовок X-Max-Init-Data — подпись МАКС, "
+        "которую мини-приложение получает при запуске (window.WebApp.initData)."
+    ),
+)
+
+SIGNED = {401: {"description": "Нет подписи МАКС (X-Max-Init-Data) или она неверна"}}
 
 
-@app.get("/api/health")
+@app.get("/api/health", response_model=HealthOut, tags=["служебное"])
 async def health():
     """Жив ли сервер и бот. bot.ok = false — бот давно не получал событий от МАКС: смотрим логи."""
     last_poll = bot_status["last_poll"]
@@ -71,7 +83,8 @@ async def health():
     return {"ok": True, "bot": bot}
 
 
-@app.get("/api/pick")
+@app.get("/api/pick", response_model=PickOut, response_model_exclude_none=True, tags=["подбор"],
+         responses={400: {"description": "Неизвестное настроение или день"}})
 async def api_pick(mood: str, day: str = "today", budget: bool = False):
     """Три события под настроение. Пример: /api/pick?mood=charged&day=saturday&budget=1"""
     if mood not in MOODS and mood != WILD:
@@ -84,14 +97,10 @@ async def api_pick(mood: str, day: str = "today", budget: bool = False):
     return {"mood": mood, "day": target_day.isoformat(), "budget": budget, "results": results}
 
 
-@app.get("/api/me")
+@app.get("/api/me", response_model=MeOut, tags=["пользователь"], responses=SIGNED)
 async def api_me(launch: dict = Depends(launch_data)):
     """Кто и из какого чата открыл мини-приложение. Нужен заголовок X-Max-Init-Data."""
     return {"user": launch.get("user"), "chat": launch.get("chat"), "start_param": launch.get("start_param")}
-
-
-class InviteIn(BaseModel):
-    event_id: str
 
 
 def invite_chat_id(launch: dict) -> int | None:
@@ -103,7 +112,11 @@ def invite_chat_id(launch: dict) -> int | None:
     return int(match.group(1)) if match else None  # None — пришлём в личку с ботом
 
 
-@app.post("/api/invites")
+@app.post("/api/invites", response_model=InviteCreated, tags=["приглашения"], responses={
+    **SIGNED,
+    404: {"description": "Нет такого события"},
+    502: {"description": "Бот не смог написать в чат (не добавлен или не администратор)"},
+})
 async def api_create_invite(body: InviteIn, launch: dict = Depends(launch_data)):
     """Позвать друзей: бот присылает карточку события в чат, из которого открыто мини-приложение."""
     if find_event(body.event_id) is None:
@@ -122,6 +135,9 @@ async def api_create_invite(body: InviteIn, launch: dict = Depends(launch_data))
     api = getattr(app.state, "max_api", None)
     if api is None:
         return {"invite_id": invite_id, "sent": False}  # локально без токена: карточку отправить нечем
+    if launch.get("dev") and not chat_id:
+        # Тестовый пользователь выдуман: писать ему в личку нельзя — это мог бы оказаться чужой человек
+        return {"invite_id": invite_id, "sent": False}
     try:
         await send_invite(api, invite_id, chat_id=chat_id, user_id=None if chat_id else user_id)
     except httpx.HTTPError as error:
@@ -130,7 +146,8 @@ async def api_create_invite(body: InviteIn, launch: dict = Depends(launch_data))
     return {"invite_id": invite_id, "sent": True}
 
 
-@app.get("/api/invites/{invite_id}")
+@app.get("/api/invites/{invite_id}", response_model=InviteOut, response_model_exclude_none=True,
+         tags=["приглашения"], responses={**SIGNED, 404: {"description": "Нет такого приглашения"}})
 async def api_get_invite(invite_id: str, launch: dict = Depends(launch_data)):
     """Событие и ответы друзей — для живого счётчика в мини-приложении."""
     invite = db.get_invite(invite_id)
@@ -141,7 +158,7 @@ async def api_get_invite(invite_id: str, launch: dict = Depends(launch_data)):
     return {"invite_id": invite_id, "event": event, "answers": answers}
 
 
-@app.get("/api/stats")
+@app.get("/api/stats", response_model=StatsOut, tags=["метрика"])
 async def api_stats():
     """Главная метрика: доля выбранных вечеров, которые состоялись (сходили ÷ собирались)."""
     going, went = db.stats()

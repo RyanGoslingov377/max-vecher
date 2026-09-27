@@ -1,0 +1,93 @@
+# DATA-API.yaml — собственный API решения «Вечер по настроению».
+# Состав — по FAQ организаторов: HTTPS-адрес, OpenAPI 3.0/3.1, тестовые данные и доступы.
+# Официального шаблона у команды нет; если он есть — поля переложим в него.
+
+name: Вечер по настроению — API
+version: 1.0.0
+description: >
+  API мини-приложения для мессенджера МАКС: подбор событий под настроение, приглашение друзей
+  в групповой чат карточкой «Иду / Может / Не могу» и метрика «сходили ÷ собирались».
+base_url: https://max-vecher-gosuslugov233.amvera.io
+
+openapi:
+  version: 3.1.0
+  url: https://max-vecher-gosuslugov233.amvera.io/openapi.json
+  file: openapi.json            # копия в репозитории, тест проверяет, что она актуальна
+  docs_url: https://max-vecher-gosuslugov233.amvera.io/docs
+
+authentication:
+  type: header
+  header: X-Max-Init-Data
+  applies_to: [/api/me, /api/invites, "/api/invites/{invite_id}"]
+  description: >
+    Подпись МАКС — строка window.WebApp.initData, которую мессенджер передаёт мини-приложению
+    при запуске. Сервер проверяет её токеном бота по алгоритму https://dev.max.ru/docs/webapps/validation
+    (HMAC-SHA256, подпись не старше суток). Без заголовка или с неверной подписью — 401.
+    Остальные адреса открыты.
+  test_access: >
+    Токены и пароли экспертам не нужны. Подпись появляется сама, если открыть бота
+    @t420_hakaton_max_bot в МАКС, написать /вечер и нажать «Подобрать вечер».
+    При локальном запуске: DEV_AUTH=1 в .env — сервер пускает тестового пользователя без подписи.
+
+endpoints:
+  - method: GET
+    path: /api/health
+    auth: нет
+    description: Жив ли сервер и бот (bot.ok — бот получал события от МАКС в последние 2 минуты).
+    example: curl https://max-vecher-gosuslugov233.amvera.io/api/health
+
+  - method: GET
+    path: /api/pick
+    auth: нет
+    params:
+      mood: charged | release | exhale | blue | learn | wild
+      day: today | tomorrow | saturday
+      budget: 0 | 1   # 1 — сначала события до 300 ₽
+    description: До трёх событий под настроение на выбранный день, лучшее — первое.
+    example: curl "https://max-vecher-gosuslugov233.amvera.io/api/pick?mood=charged&day=saturday&budget=1"
+
+  - method: GET
+    path: /api/me
+    auth: X-Max-Init-Data
+    description: Кто и из какого чата открыл мини-приложение.
+
+  - method: POST
+    path: /api/invites
+    auth: X-Max-Init-Data
+    body: '{"event_id": "<id из /api/pick>"}'
+    description: >
+      Позвать друзей: бот присылает карточку события в чат, из которого открыто мини-приложение
+      (нет чата — в личку с ботом). Ответ {invite_id, sent}. Ошибки: 404 — нет события, 502 — бот не смог написать.
+
+  - method: GET
+    path: /api/invites/{invite_id}
+    auth: X-Max-Init-Data
+    description: Событие и ответы друзей — для живого счётчика в мини-приложении.
+
+  - method: GET
+    path: /api/stats
+    auth: нет
+    description: Метрика продукта — {going, went, rate}, rate = сходили ÷ собирались.
+    example: curl https://max-vecher-gosuslugov233.amvera.io/api/stats
+
+test_data:
+  events:
+    file: data/events.json
+    count: 33
+    kind: синтетические (демо)
+    description: >
+      События, места, цены и расписания выдуманы командой для демонстрации: адреса — условные
+      («Клуб на Баумана»), большинство событий регулярные (по дням недели), поэтому подбор
+      работает в любой день проверки. В мини-приложении это подписано: «Демо: события, даты и цены условные».
+  storage: SQLite на постоянном диске хостинга (/data/app.db) — приглашения, ответы, «Сходили?».
+
+limits:
+  - Подбор — правила по двум осям (энергия и глубина) плюс теги, без ИИ.
+  - Приглашение в групповой чат работает, только если бот добавлен в чат администратором.
+  - Бот МАКС ограничивает отправку: не больше 2 сообщений в секунду в один чат.
+
+modeled:
+  - События синтетические; для реальной работы нужен куратор или партнёрская афиша с API.
+  - Оплаты и билетов нет; кнопка «Билеты» появляется только у событий со ссылкой на сайт организатора.
+  - Вопрос «Сходили?» в демо приходит через 2 минуты (FOLLOWUP_DELAY_MIN=2), в продукте — в полдень следующего дня после события.
+  - Статус «студент» (Цифровой ID) и студенческие скидки не подключены.

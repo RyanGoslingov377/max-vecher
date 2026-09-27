@@ -5,7 +5,7 @@
 import math
 import random
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, time, timedelta, timezone
 
 KAZAN_TZ = timezone(timedelta(hours=3))  # в Казани UTC+3 круглый год
 BUDGET_MAX = 300  # руб., порог тумблера «Бюджет поджимает»
@@ -35,6 +35,7 @@ MOODS = {
 EMOTIONAL = ["charged", "release", "exhale", "blue"]
 WILD = "wild"  # «Удиви меня»: по одному событию из трёх случайных настроений
 DAYS = ("today", "tomorrow", "saturday")
+WEEKDAY_NAMES = ["пн", "вт", "ср", "чт", "пт", "сб", "вс"]  # для регулярных событий в data/events.json
 
 
 def resolve_day(day: str, now: datetime) -> date:
@@ -56,13 +57,32 @@ def starts_at(event: dict) -> datetime | None:
     return start if start.tzinfo else start.replace(tzinfo=KAZAN_TZ)
 
 
+def occurrence_on(event: dict, day: date) -> datetime | None:
+    """Когда событие начинается в этот день: разовое — по своей дате, регулярное — по дню недели и времени."""
+    weekly = event.get("weekly")
+    if weekly:
+        if WEEKDAY_NAMES[day.weekday()] not in weekly["days"]:
+            return None
+        hours, minutes = map(int, weekly["time"].split(":"))
+        return datetime.combine(day, time(hours, minutes), tzinfo=KAZAN_TZ)
+    start = starts_at(event)
+    if start and start.astimezone(KAZAN_TZ).date() == day:
+        return start
+    return None
+
+
 def is_on_day(event: dict, day: date, now: datetime) -> bool:
     if event.get("anytime"):
         return True
-    start = starts_at(event)
-    if start.astimezone(KAZAN_TZ).date() != day:
-        return False
-    return start > now - timedelta(hours=1)  # началось больше часа назад — уже не предлагаем
+    start = occurrence_on(event, day)
+    return start is not None and start > now - timedelta(hours=1)  # началось больше часа назад — не предлагаем
+
+
+def on_day(event: dict, day: date) -> dict:
+    """Регулярное событие → конкретное: с датой этого дня и id вида «quiz@2026-10-02»."""
+    if not event.get("weekly"):
+        return event
+    return {**event, "id": f"{event['id']}@{day.isoformat()}", "starts_at": occurrence_on(event, day).isoformat()}  # началось больше часа назад — уже не предлагаем
 
 
 def score(mood: Mood, event: dict) -> float:
@@ -87,7 +107,7 @@ def pick(
         return pick_wild(events, day, budget_on=budget_on, now=now, rng=rng or random.Random())
 
     mood = MOODS[mood_id]
-    pool = [e for e in events if is_on_day(e, day, now)]
+    pool = [on_day(e, day) for e in events if is_on_day(e, day, now)]
     if mood.growth:
         pool = [e for e in pool if e["growth"]]
 

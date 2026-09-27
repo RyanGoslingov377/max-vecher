@@ -1,6 +1,8 @@
 import random
 from datetime import date, datetime
 
+import pytest
+
 from server.picker import KAZAN_TZ, pick, resolve_day
 
 NOW = datetime(2026, 9, 26, 12, 0, tzinfo=KAZAN_TZ)  # суббота, полдень
@@ -84,3 +86,44 @@ def test_resolve_day():
     assert resolve_day("tomorrow", wednesday) == date(2026, 9, 24)
     assert resolve_day("saturday", wednesday) == date(2026, 9, 26)
     assert resolve_day("saturday", NOW) == SATURDAY  # в субботу «суббота» — это сегодня
+
+
+QUIZ = {"id": "quiz", "title": "Квиз", "place": "-", "price": 300, "tags": ["игры"], "nrg": 2, "dep": 0,
+        "growth": False, "why": "-", "weekly": {"days": ["пт", "сб"], "time": "20:00"}}
+
+
+def test_weekly_event_on_its_day_gets_date_and_id():
+    [result] = pick([QUIZ], "charged", SATURDAY, now=NOW)  # 26.09.2026 — суббота
+    assert result["event"]["id"] == "quiz@2026-09-26"
+    assert result["event"]["starts_at"] == "2026-09-26T20:00:00+03:00"
+
+
+def test_weekly_event_not_on_other_days():
+    assert pick([QUIZ], "charged", date(2026, 9, 27), now=NOW) == []  # воскресенье
+
+
+def test_weekly_event_that_already_started_is_skipped():
+    late = datetime(2026, 9, 26, 21, 30, tzinfo=KAZAN_TZ)
+    assert pick([QUIZ], "charged", SATURDAY, now=late) == []
+
+
+def test_find_event_resolves_weekly_occurrence(monkeypatch):
+    from server import events
+    monkeypatch.setattr(events, "load_events", lambda: [QUIZ])
+    assert events.find_event("quiz@2026-10-02")["starts_at"] == "2026-10-02T20:00:00+03:00"  # пятница
+    assert events.find_event("quiz@2026-10-01") is None  # четверг — не проходит
+    assert events.find_event("quiz@мусор") is None
+    assert events.find_event("quiz")["weekly"]["days"] == ["пт", "сб"]
+
+
+@pytest.mark.parametrize("bad", [
+    {"weekly": {"days": ["пятница"], "time": "20:00"}},
+    {"weekly": {"days": ["пт"], "time": "25:00"}},
+    {"weekly": {"days": ["пт"], "time": "20:00"}, "anytime": True},
+    {"weekly": None},
+])
+def test_check_event_rejects_bad_schedule(bad):
+    from server.events import check_event
+    event = {k: v for k, v in QUIZ.items() if k != "weekly"} | bad
+    with pytest.raises(ValueError):
+        check_event(event)

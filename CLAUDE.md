@@ -16,9 +16,9 @@
 
 | Файлы | Хозяин |
 | --- | --- |
-| `server/`, `tests/`, `requirements.txt`, `Dockerfile`, `docker-compose.yml`, `amvera.yml`, `.dockerignore`, `.env.example`, `.github/`, `README.md`, `CLAUDE.md`, `.gitignore` | бэкенд |
+| `server/`, `tests/`, `requirements.txt`, `Dockerfile`, `docker-compose.yml`, `amvera.yml`, `.dockerignore`, `.env.example`, `.github/`, `README.md`, `CLAUDE.md`, `.gitignore`, `openapi.json`, `DATA-API.yaml` | бэкенд |
 | `web/` (включая `web/README.md`), `prototype/` | фронт |
-| `data/events.json` | фронт (задача К1) |
+| `data/events.json` | фронт (К1 сделал бэкенд по решению команды; дальше правки — по договорённости в чате) |
 
 - Чужие файлы не меняй. Если там нужна правка (например, новый адрес API), скажи человеку, что написать напарнику.
 - Фронт описывает своё устройство в `web/README.md`, а не в корневом README.
@@ -52,6 +52,7 @@
 - Запуск: `python -m uvicorn server.main:app --reload --port 3000`. Мини-приложение из `web/` — на http://localhost:3000, API — `/api/...`, документация API — `/docs`.
 - Если порт 3000 занят, сервер уже запущен у человека и с `--reload` сам подхватывает правки в `.py`. Второй экземпляр не запускай.
 - Тесты: `python -m pytest` — перед каждым PR и после каждой правки `data/events.json`.
+- После изменения API (адреса, форматы в `server/schemas.py`): `python -m server.export_openapi` — обновляет `openapi.json`, иначе тест упадёт.
 - Docker (обязателен по правилам): `docker compose up --build`. В контейнере база лежит в `/data/app.db` (`DB_PATH` задан в `Dockerfile`), в compose это том `app-storage`.
 - Хостинг — Amvera: собирает тот же `Dockerfile` по настройкам из `amvera.yml`, постоянный диск — `/data`, порт 3000. Токен и остальные переменные заданы в интерфейсе Amvera, не в репозитории. Адрес: https://max-vecher-gosuslugov233.amvera.io/ (он же отправлен организаторам как адрес мини-приложения). Amvera подключена к GitHub и сама забирает `main` после мёрджа; если новая версия не появилась — бэкенд жмёт пересборку в интерфейсе Amvera.
 
@@ -82,8 +83,11 @@ server/db.py        SQLite: invites, rsvps, followups, outcomes
 server/followup.py  «Сходили?» после события и метрика
 server/max_api.py   клиент Bot API МАКС
 server/config.py    настройки из .env
+server/schemas.py   форматы ответов API (для OpenAPI)
+server/export_openapi.py  сохранить openapi.json
 web/                мини-приложение (index.html, styles.css, app.js, api.js)
-data/events.json    события (пока выдуманные примеры)
+data/events.json    33 синтетических события (демо), в основном регулярные
+openapi.json        описание API (генерируется), DATA-API.yaml — API для экспертов
 tests/              pytest
 ```
 
@@ -101,6 +105,7 @@ tests/              pytest
 
 - `mood`: charged, release, exhale, blue, learn, wild. `day`: today, tomorrow, saturday. `answer`: going, maybe, no.
 - `event`: `id`, `title`, `place`, `starts_at` (ISO с `+03:00`) или `"anytime": true`, `price` (₽, 0 — бесплатно), `tags`, `nrg` и `dep` (0–2), `growth`, `why`, необязательный `ticket_url`.
+- Регулярные события: в `data/events.json` вместо даты — `"weekly": {"days": ["пт", "сб"], "time": "20:00"}`. `/api/pick` отдаёт их уже с датой выбранного дня (`starts_at`) и id вида `quiz@2026-10-02`; этот id фронт передаёт в `POST /api/invites` как есть. Для фронта id — просто строка.
 - `sent: false` — локально без токена: приглашение сохранено, но карточку отправить нечем. Это нормально для разработки фронта.
 - `/api/me` и все `/api/invites` идут с заголовком `X-Max-Init-Data: <window.WebApp.initData>`. Без заголовка или с неверной подписью — 401. При `DEV_AUTH=1` сервер без заголовка подставляет тестового пользователя `{id: 1, first_name: "Тест"}` и чат из `DEV_CHAT_ID` (только локально). Проверка — `server/auth.py`.
 - id чата фронт не передаёт: сервер берёт его из подписанных данных МАКС — групповой `chat`, а если его нет, то `start_param` вида `chat<id>`, который кладёт кнопка «Подобрать вечер» (`/вечер` в боте). Нет ни того, ни другого — приглашение уходит в личку с ботом.
