@@ -1,0 +1,883 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Вечер по настроению — прототип</title>
+  <style>
+    :root {
+      --bg: #f4f5f8;
+      --panel: #ffffff;
+      --panel-soft: #eceff5;
+      --text: #111318;
+      --muted: #687083;
+      --line: #dde1ea;
+      --accent: #2563eb;
+      --accent-text: #ffffff;
+      --success: #15803d;
+      --warning: #b45309;
+      --danger: #9ca3af;
+      --mood: #2563eb;
+      --ink: #ffffff;
+      --radius: 8px;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      color-scheme: light;
+    }
+
+    * { box-sizing: border-box; }
+
+    [hidden] { display: none !important; }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    button {
+      border: 0;
+      color: inherit;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    button:focus-visible {
+      outline: 3px solid rgba(37, 99, 235, 0.35);
+      outline-offset: 2px;
+    }
+
+    .shell {
+      width: min(100%, 420px);
+      min-height: 100vh;
+      margin: 0 auto;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      min-height: 56px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .topbar-title {
+      flex: 1;
+      font-size: 17px;
+      font-weight: 800;
+    }
+
+    .icon-button {
+      width: 38px;
+      height: 38px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background: var(--panel-soft);
+    }
+
+    .city-chip,
+    .small-chip {
+      border-radius: 999px;
+      padding: 6px 10px;
+      background: var(--panel-soft);
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .view {
+      flex: 1;
+      display: none;
+      padding: 4px 14px 96px;
+    }
+
+    .view.is-active {
+      display: block;
+      animation: enter 180ms ease-out;
+    }
+
+    @keyframes enter {
+      from { opacity: 0; transform: translateY(6px); }
+    }
+
+    h1 {
+      margin: 8px 0 8px;
+      font-size: 28px;
+      line-height: 1.12;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin: 22px 0 10px;
+      font-size: 15px;
+      line-height: 1.2;
+    }
+
+    h3 {
+      margin: 4px 0 6px;
+      font-size: 20px;
+      line-height: 1.2;
+    }
+
+    p {
+      margin: 0;
+      line-height: 1.42;
+    }
+
+    .lead {
+      margin-bottom: 20px;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .mood-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .mood-tile {
+      min-height: 128px;
+      padding: 14px;
+      border-radius: var(--radius);
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      text-align: left;
+      background: var(--tile);
+      color: var(--tile-ink);
+    }
+
+    .mood-tile:active,
+    .button:active,
+    .event-card:active {
+      transform: translateY(1px);
+    }
+
+    .mood-icon {
+      font-size: 34px;
+      line-height: 1;
+      margin-bottom: auto;
+    }
+
+    .mood-title {
+      margin-top: 18px;
+      font-size: 17px;
+      font-weight: 850;
+      line-height: 1.12;
+    }
+
+    .mood-subtitle {
+      margin-top: 3px;
+      font-size: 13px;
+      opacity: 0.78;
+    }
+
+    .mood-page {
+      min-height: 100vh;
+      background: var(--mood);
+      color: var(--ink);
+    }
+
+    .mood-page .shell {
+      background: transparent;
+    }
+
+    .mood-page .view {
+      color: var(--ink);
+    }
+
+    .mood-page .icon-button {
+      background: color-mix(in srgb, var(--ink) 16%, transparent);
+    }
+
+    .mood-head {
+      margin: 4px 0 18px;
+    }
+
+    .mood-head-icon {
+      display: block;
+      margin-bottom: 10px;
+      font-size: 48px;
+      line-height: 1;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip {
+      min-height: 40px;
+      padding: 9px 14px;
+      border: 1px solid color-mix(in srgb, currentColor 42%, transparent);
+      border-radius: 999px;
+      background: transparent;
+      font-weight: 750;
+    }
+
+    .chip.is-selected {
+      background: var(--ink);
+      color: var(--mood);
+      border-color: var(--ink);
+    }
+
+    .switch-row {
+      width: 100%;
+      min-height: 68px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-radius: var(--radius);
+      background: color-mix(in srgb, var(--ink) 13%, transparent);
+      text-align: left;
+    }
+
+    .switch-title {
+      display: block;
+      font-weight: 800;
+    }
+
+    .switch-subtitle {
+      display: block;
+      margin-top: 2px;
+      font-size: 13px;
+      opacity: 0.78;
+    }
+
+    .switch {
+      width: 50px;
+      height: 30px;
+      padding: 3px;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--ink) 28%, transparent);
+    }
+
+    .switch::before {
+      content: "";
+      display: block;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--mood);
+      transition: transform 160ms ease;
+    }
+
+    .switch.is-on {
+      background: var(--ink);
+    }
+
+    .switch.is-on::before {
+      transform: translateX(20px);
+    }
+
+    .bottom-bar {
+      position: fixed;
+      left: 50%;
+      bottom: 0;
+      z-index: 10;
+      width: min(100%, 420px);
+      padding: 12px 14px 14px;
+      transform: translateX(-50%);
+      background: linear-gradient(to top, var(--bg) 76%, rgba(244, 245, 248, 0));
+    }
+
+    .mood-page .bottom-bar {
+      background: linear-gradient(to top, var(--mood) 76%, color-mix(in srgb, var(--mood) 0%, transparent));
+    }
+
+    .bar-note {
+      margin: 0 0 8px;
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .mood-page .bar-note {
+      color: color-mix(in srgb, var(--ink) 78%, transparent);
+    }
+
+    .button {
+      width: 100%;
+      min-height: 52px;
+      border-radius: var(--radius);
+      background: var(--accent);
+      color: var(--accent-text);
+      font-weight: 850;
+      font-size: 16px;
+    }
+
+    .button.secondary {
+      background: var(--panel);
+      color: var(--text);
+      border: 1px solid var(--line);
+    }
+
+    .mood-page .button {
+      background: var(--ink);
+      color: var(--mood);
+    }
+
+    .event-card,
+    .detail-card,
+    .counter-card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      padding: 14px;
+    }
+
+    .event-card {
+      margin-bottom: 10px;
+      text-align: left;
+    }
+
+    .event-card.is-top {
+      background: var(--mood);
+      color: var(--ink);
+      border-color: transparent;
+    }
+
+    .card-label {
+      display: inline-block;
+      margin-bottom: 10px;
+      padding: 5px 8px;
+      border-radius: 999px;
+      background: color-mix(in srgb, currentColor 10%, transparent);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .event-card.is-top .meta {
+      color: color-mix(in srgb, var(--ink) 78%, transparent);
+    }
+
+    .why {
+      margin-top: 10px;
+      font-size: 15px;
+    }
+
+    .card-footer {
+      margin-top: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .price {
+      font-size: 17px;
+      font-weight: 850;
+    }
+
+    .inline-button {
+      min-width: 104px;
+      min-height: 38px;
+      border-radius: 999px;
+      background: var(--accent);
+      color: var(--accent-text);
+      font-size: 14px;
+      font-weight: 850;
+    }
+
+    .event-card.is-top .inline-button {
+      background: var(--ink);
+      color: var(--mood);
+    }
+
+    .tags {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .tag {
+      border-radius: 999px;
+      padding: 4px 8px;
+      background: var(--panel-soft);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .tag.warn {
+      background: #fff7ed;
+      color: var(--warning);
+    }
+
+    .facts {
+      margin: 12px 0;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+    }
+
+    .fact {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 12px 14px;
+    }
+
+    .fact + .fact {
+      border-top: 1px solid var(--line);
+    }
+
+    .fact span:first-child {
+      color: var(--muted);
+    }
+
+    .fact span:last-child {
+      max-width: 62%;
+      text-align: right;
+      font-weight: 750;
+    }
+
+    .counter-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .counter {
+      min-height: 96px;
+      padding: 12px 8px;
+      border-radius: var(--radius);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      text-align: center;
+    }
+
+    .counter strong {
+      display: block;
+      font-size: 26px;
+      line-height: 1;
+    }
+
+    .counter span {
+      display: block;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    .counter small {
+      display: block;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      overflow-wrap: anywhere;
+    }
+
+    .success-badge {
+      width: 56px;
+      height: 56px;
+      margin-bottom: 12px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: #dcfce7;
+      color: var(--success);
+      font-size: 30px;
+      font-weight: 900;
+    }
+
+    .live-row {
+      margin-top: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 0 5px rgba(21, 128, 61, 0.12);
+    }
+
+    @media (max-width: 360px) {
+      .mood-grid { gap: 8px; }
+      .mood-tile { min-height: 118px; padding: 12px; }
+      h1 { font-size: 25px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="page" class="shell">
+    <header class="topbar">
+      <button id="backButton" class="icon-button" type="button" aria-label="Назад" hidden>
+        <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M19 12H5m6 6-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <div id="topTitle" class="topbar-title">Вечер</div>
+      <span class="city-chip">Казань</span>
+    </header>
+
+    <main>
+      <section id="moodView" class="view is-active" data-title="Вечер">
+        <h1>Какое у тебя настроение?</h1>
+        <p class="lead">Выбери одно, а мы оставим только три варианта на вечер.</p>
+        <div id="moodGrid" class="mood-grid"></div>
+      </section>
+
+      <section id="setupView" class="view" data-title="Настройка">
+        <div class="mood-head">
+          <span id="setupIcon" class="mood-head-icon"></span>
+          <h1 id="setupTitle"></h1>
+          <p id="setupLead" class="lead"></p>
+        </div>
+        <h2>Когда</h2>
+        <div class="chips" aria-label="День">
+          <button class="chip is-selected" type="button" data-day="today">Сегодня</button>
+          <button class="chip" type="button" data-day="tomorrow">Завтра</button>
+          <button class="chip" type="button" data-day="saturday">В субботу</button>
+        </div>
+        <h2>Деньги</h2>
+        <button id="budgetButton" class="switch-row" type="button" role="switch" aria-checked="false">
+          <span>
+            <span class="switch-title">Бюджет поджимает</span>
+            <span class="switch-subtitle">Сначала события до 300 рублей</span>
+          </span>
+          <span id="budgetSwitch" class="switch" aria-hidden="true"></span>
+        </button>
+      </section>
+
+      <section id="resultsView" class="view" data-title="Три варианта">
+        <h1 id="resultsTitle"></h1>
+        <p id="resultsLead" class="lead"></p>
+        <div id="resultsList"></div>
+      </section>
+
+      <section id="planView" class="view" data-title="План">
+        <article class="detail-card">
+          <span id="planWhen" class="meta"></span>
+          <h1 id="planTitle"></h1>
+          <p id="planWhy"></p>
+        </article>
+        <div class="facts">
+          <div class="fact"><span>Где</span><span id="planPlace"></span></div>
+          <div class="fact"><span>Когда</span><span id="planTime"></span></div>
+          <div class="fact"><span>Цена</span><span id="planPrice"></span></div>
+        </div>
+        <button id="ticketButton" class="button secondary" type="button">Билеты на сайте организатора</button>
+      </section>
+
+      <section id="inviteView" class="view" data-title="Приглашение">
+        <div class="success-badge">✓</div>
+        <h1>Позвали!</h1>
+        <p class="lead">Карточка уже в чате, ответы друзей появятся здесь.</p>
+        <article class="detail-card">
+          <span id="inviteWhen" class="meta"></span>
+          <h3 id="inviteTitle"></h3>
+          <p id="invitePlace" class="meta"></p>
+        </article>
+        <div class="counter-grid">
+          <div class="counter">
+            <strong id="goingCount">1</strong>
+            <span>Иду</span>
+            <small id="goingNames">Ты</small>
+          </div>
+          <div class="counter">
+            <strong id="maybeCount">0</strong>
+            <span>Может</span>
+            <small id="maybeNames">-</small>
+          </div>
+          <div class="counter">
+            <strong id="noCount">0</strong>
+            <span>Не могу</span>
+            <small id="noNames">-</small>
+          </div>
+        </div>
+        <div class="live-row"><span class="live-dot"></span>Обновляется само</div>
+      </section>
+    </main>
+
+    <div class="bottom-bar">
+      <p id="barNote" class="bar-note" hidden></p>
+      <button id="primaryButton" class="button" type="button">Продолжить</button>
+    </div>
+  </div>
+
+  <script>
+    const moods = [
+      { id: "charged", title: "Заряжен(а)", hint: "Музыка и танцы", icon: "⚡", color: "#ff5b22", ink: "#ffffff" },
+      { id: "release", title: "Выпустить пар", hint: "Спорт и смех", icon: "🥊", color: "#ffc83d", ink: "#1b1300" },
+      { id: "exhale", title: "Хочу выдохнуть", hint: "Природа и тишина", icon: "🌿", color: "#b9e4cc", ink: "#0b2a1b" },
+      { id: "blue", title: "Погрустить красиво", hint: "Арт и кино", icon: "🌧", color: "#3f5bdb", ink: "#ffffff" },
+      { id: "learn", title: "Узнать новое", hint: "Лекции и мастер-классы", icon: "🧠", color: "#0f7c86", ink: "#ffffff" },
+      { id: "wild", title: "Удиви меня", hint: "Три разных настроения", icon: "🎲", color: "#6d4bff", ink: "#ffffff" }
+    ];
+
+    const events = [
+      {
+        id: "street-dance",
+        title: "Танцы на набережной",
+        place: "Набережная озера Кабан",
+        when: "Сегодня, 17:00",
+        price: 0,
+        why: "Музыка под открытым небом, вход свободный",
+        tags: ["танцы", "бесплатно"],
+        mood: "charged"
+      },
+      {
+        id: "quiz-party",
+        title: "Квиз-вечеринка",
+        place: "Бар на Профсоюзной",
+        when: "Сегодня, 19:30",
+        price: 300,
+        why: "Команда, азарт и смех с первого раунда",
+        tags: ["игры", "юмор"],
+        mood: "release"
+      },
+      {
+        id: "indie-concert",
+        title: "Концерт инди-группы",
+        place: "Клуб на Баумана",
+        when: "Сегодня, 20:00",
+        price: 800,
+        why: "Живой звук и зал, который поет хором",
+        tags: ["музыка", "дороже 300 ₽"],
+        mood: "charged",
+        overBudget: true,
+        ticketUrl: true
+      }
+    ];
+
+    const screenOrder = ["mood", "setup", "results", "plan", "invite"];
+    const state = {
+      screen: "mood",
+      history: [],
+      mood: moods[0],
+      day: "today",
+      budget: false,
+      event: events[0],
+      inviteStep: 0
+    };
+
+    const page = document.getElementById("page");
+    const topTitle = document.getElementById("topTitle");
+    const backButton = document.getElementById("backButton");
+    const primaryButton = document.getElementById("primaryButton");
+    const bottomBar = document.querySelector(".bottom-bar");
+    const barNote = document.getElementById("barNote");
+    const budgetButton = document.getElementById("budgetButton");
+    const budgetSwitch = document.getElementById("budgetSwitch");
+
+    function moodById(id) {
+      return moods.find((mood) => mood.id === id) || moods[0];
+    }
+
+    function priceLabel(price) {
+      return price ? `${price} ₽` : "Бесплатно";
+    }
+
+    function setMoodVars(mood) {
+      document.documentElement.style.setProperty("--mood", mood.color);
+      document.documentElement.style.setProperty("--ink", mood.ink);
+    }
+
+    function go(screen) {
+      if (state.screen !== screen) state.history.push(state.screen);
+      state.screen = screen;
+      render();
+    }
+
+    function back() {
+      state.screen = state.history.pop() || "mood";
+      render();
+    }
+
+    function renderMoods() {
+      document.getElementById("moodGrid").innerHTML = moods.map((mood) => `
+        <button class="mood-tile" type="button" data-mood="${mood.id}"
+          style="--tile:${mood.color};--tile-ink:${mood.ink}">
+          <span class="mood-icon">${mood.icon}</span>
+          <span class="mood-title">${mood.title}</span>
+          <span class="mood-subtitle">${mood.hint}</span>
+        </button>
+      `).join("");
+    }
+
+    function renderSetup() {
+      const mood = state.mood;
+      document.getElementById("setupIcon").textContent = mood.icon;
+      document.getElementById("setupTitle").textContent = mood.title;
+      document.getElementById("setupLead").textContent = mood.hint;
+      document.querySelectorAll("[data-day]").forEach((button) => {
+        button.classList.toggle("is-selected", button.dataset.day === state.day);
+      });
+      budgetButton.setAttribute("aria-checked", String(state.budget));
+      budgetSwitch.classList.toggle("is-on", state.budget);
+    }
+
+    function eventCard(event, index) {
+      const mood = moodById(event.mood);
+      const tags = event.tags.map((tag) => `<span class="tag ${tag.includes("дороже") ? "warn" : ""}">${tag}</span>`).join("");
+      return `
+        <button class="event-card ${index === 0 ? "is-top" : ""}" type="button" data-event="${event.id}"
+          style="--mood:${mood.color};--ink:${mood.ink}">
+          ${index === 0 ? '<span class="card-label">Мы бы пошли сюда</span>' : ""}
+          <span class="meta">${event.when}</span>
+          <h3>${event.title}</h3>
+          <p class="meta">${event.place}</p>
+          <p class="why">${event.why}</p>
+          <div class="tags">${tags}</div>
+          <div class="card-footer">
+            <span class="price">${priceLabel(event.price)}</span>
+            <span class="inline-button">Выбрать</span>
+          </div>
+        </button>
+      `;
+    }
+
+    function renderResults() {
+      document.getElementById("resultsTitle").textContent = `${state.mood.icon} ${state.mood.title}`;
+      document.getElementById("resultsLead").textContent = state.budget
+        ? "Сначала показываем варианты до 300 рублей."
+        : "Три варианта вместо бесконечной афиши.";
+      document.getElementById("resultsList").innerHTML = events.map(eventCard).join("");
+    }
+
+    function renderPlan() {
+      const event = state.event;
+      document.getElementById("planWhen").textContent = event.when;
+      document.getElementById("planTitle").textContent = event.title;
+      document.getElementById("planWhy").textContent = event.why;
+      document.getElementById("planPlace").textContent = event.place;
+      document.getElementById("planTime").textContent = event.when;
+      document.getElementById("planPrice").textContent = priceLabel(event.price);
+      document.getElementById("ticketButton").hidden = !event.ticketUrl;
+    }
+
+    function renderInvite() {
+      const event = state.event;
+      const steps = [
+        { going: ["Ты"], maybe: [], no: [] },
+        { going: ["Ты", "Аня"], maybe: ["Илья"], no: [] },
+        { going: ["Ты", "Аня", "Данил"], maybe: ["Илья"], no: ["Маша"] }
+      ];
+      const answers = steps[state.inviteStep % steps.length];
+      state.inviteStep += 1;
+
+      document.getElementById("inviteWhen").textContent = event.when;
+      document.getElementById("inviteTitle").textContent = event.title;
+      document.getElementById("invitePlace").textContent = event.place;
+      document.getElementById("goingCount").textContent = answers.going.length;
+      document.getElementById("maybeCount").textContent = answers.maybe.length;
+      document.getElementById("noCount").textContent = answers.no.length;
+      document.getElementById("goingNames").textContent = answers.going.join(", ") || "-";
+      document.getElementById("maybeNames").textContent = answers.maybe.join(", ") || "-";
+      document.getElementById("noNames").textContent = answers.no.join(", ") || "-";
+    }
+
+    function renderChrome() {
+      const isMoodPage = state.screen === "setup";
+      document.body.classList.toggle("mood-page", isMoodPage);
+      page.classList.toggle("shell", true);
+      topTitle.textContent = document.getElementById(`${state.screen}View`).dataset.title;
+      backButton.hidden = state.history.length === 0;
+      bottomBar.hidden = state.screen === "mood";
+
+      barNote.hidden = true;
+      if (state.screen === "setup") primaryButton.textContent = "Показать 3 варианта";
+      if (state.screen === "results") primaryButton.textContent = "Другое настроение";
+      if (state.screen === "plan") {
+        primaryButton.textContent = "Позвать чат";
+        barNote.hidden = false;
+        barNote.textContent = "Бот пришлет карточку с кнопками Иду / Может / Не могу";
+      }
+      if (state.screen === "invite") primaryButton.textContent = "Готово";
+    }
+
+    function render() {
+      setMoodVars(state.mood);
+      document.querySelectorAll(".view").forEach((view) => {
+        view.classList.toggle("is-active", view.id === `${state.screen}View`);
+      });
+      renderSetup();
+      renderResults();
+      renderPlan();
+      if (state.screen === "invite") renderInvite();
+      renderChrome();
+    }
+
+    renderMoods();
+    render();
+
+    document.addEventListener("click", (event) => {
+      const moodButton = event.target.closest("[data-mood]");
+      if (moodButton) {
+        state.mood = moodById(moodButton.dataset.mood);
+        go("setup");
+        return;
+      }
+
+      const dayButton = event.target.closest("[data-day]");
+      if (dayButton) {
+        state.day = dayButton.dataset.day;
+        render();
+        return;
+      }
+
+      const eventButton = event.target.closest("[data-event]");
+      if (eventButton) {
+        state.event = events.find((item) => item.id === eventButton.dataset.event) || events[0];
+        go("plan");
+      }
+    });
+
+    budgetButton.addEventListener("click", () => {
+      state.budget = !state.budget;
+      render();
+    });
+
+    backButton.addEventListener("click", back);
+
+    primaryButton.addEventListener("click", () => {
+      if (state.screen === "setup") go("results");
+      else if (state.screen === "results") {
+        state.history = [];
+        go("mood");
+      } else if (state.screen === "plan") {
+        state.inviteStep = 0;
+        go("invite");
+      } else if (state.screen === "invite") {
+        state.history = [];
+        state.screen = "mood";
+        render();
+      }
+    });
+
+    document.getElementById("ticketButton").addEventListener("click", () => {
+      alert("В прототипе это ссылка на сайт организатора.");
+    });
+
+    setInterval(() => {
+      if (state.screen === "invite") renderInvite();
+    }, 2600);
+  </script>
+</body>
+</html>
