@@ -6,13 +6,69 @@
   <meta name="color-scheme" content="light dark">
   <title>Вечер по настроению</title>
   <link rel="stylesheet" href="styles.css">
+  <style>
+    .file-fallback {
+      max-width: 420px;
+      margin: 0 auto;
+      padding: 24px 16px;
+      color: #0e1014;
+    }
+
+    .file-fallback h1 {
+      margin: 0 0 8px;
+      font-size: 24px;
+      line-height: 1.15;
+    }
+
+    .file-fallback p {
+      margin: 0 0 12px;
+      color: #6b7080;
+      font-size: 15px;
+      line-height: 1.45;
+    }
+
+    .file-fallback code {
+      display: inline-block;
+      padding: 3px 6px;
+      border-radius: 6px;
+      background: #e8e9ef;
+      color: #0e1014;
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 13px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: #0b0b0f;
+      }
+
+      .file-fallback {
+        color: #f3f4f7;
+      }
+
+      .file-fallback p {
+        color: #a1a7b7;
+      }
+
+      .file-fallback code {
+        background: #24252d;
+        color: #f3f4f7;
+      }
+    }
+  </style>
   <!-- MAX Bridge: объект window.WebApp — подпись, кнопка «Назад», открытие ссылок -->
   <script src="https://st.max.ru/js/max-web-app.js"></script>
   <script type="module" src="app.js"></script>
 </head>
 <body>
-  <!-- Экраны рисует app.js -->
-  <main id="app" class="app"></main>
+  <main id="app" class="app">
+    <section class="file-fallback" role="status" aria-live="polite">
+      <h1>Запусти через сервер</h1>
+      <p>Эта версия мини-приложения использует API и модульный JavaScript, поэтому при открытии файлом может не загрузиться.</p>
+      <p>Команда: <code>python -m uvicorn server.main:app --reload --port 3000</code></p>
+      <p>После запуска открой <code>http://127.0.0.1:3000</code>.</p>
+    </section>
+  </main>
   <noscript>Для мини-приложения нужен JavaScript.</noscript>
 </body>
 </html>
