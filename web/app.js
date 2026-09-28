@@ -329,6 +329,12 @@ function planScreen() {
   const event = state.event;
   const mood = moodById(state.mood);
   const chat = hasChat();
+  const ticket = event.ticket_url
+    ? `<button class="btn btn-ghost" data-action="ticket">Билеты на сайте организатора ↗</button>`
+    : `<div class="ticket-demo" role="note">
+        <span class="ticket-demo-title">Билеты в демо</span>
+        <span class="ticket-demo-text">У события нет ссылки на продажу. Для защиты показываем план и приглашение, а покупку честно помечаем как смоделированную.</span>
+      </div>`;
   return `
     ${header({ title: "План" })}
     <section class="screen" style="--mood:${mood.color};--ink:${mood.ink}">
@@ -341,7 +347,7 @@ function planScreen() {
         <div><dt>Когда</dt><dd>${whenLabel(event)}</dd></div>
         <div><dt>Цена</dt><dd>${priceLabel(event.price)}</dd></div>
       </dl>
-      ${event.ticket_url ? `<button class="btn btn-ghost" data-action="ticket">Билеты на сайте организатора ↗</button>` : ""}
+      ${ticket}
       ${state.error ? `<p class="error">${esc(state.error)}</p>` : ""}
     </section>
     <div class="bar">
