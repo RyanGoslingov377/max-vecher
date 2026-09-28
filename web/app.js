@@ -49,6 +49,7 @@ const state = {
 // ---------- Переходы ----------
 
 function go(screen) {
+  if (screen !== "invite") stopPolling();
   state.history.push(state.screen);
   state.screen = screen;
   state.error = null;
@@ -58,11 +59,13 @@ function go(screen) {
 function back() {
   if (!state.history.length) return;
   state.screen = state.history.pop();
+  if (state.screen !== "invite") stopPolling();
   state.error = null;
   render();
 }
 
 function restart() {
+  stopPolling();
   state.history = [];
   state.screen = "mood";
   state.invite = null;
@@ -104,8 +107,13 @@ async function sendInvite() {
 
 // Пока открыт экран приглашения, раз в 4 секунды спрашиваем сервер, кто что ответил
 let pollTimer = null;
-async function pollAnswers() {
+function stopPolling() {
   clearTimeout(pollTimer);
+  pollTimer = null;
+}
+
+async function pollAnswers() {
+  stopPolling();
   if (state.screen !== "invite" || !state.invite) return;
   try {
     const data = await getInvite(state.invite.invite_id);
