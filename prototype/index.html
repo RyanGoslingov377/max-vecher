@@ -6,26 +6,24 @@
   <title>Вечер по настроению — прототип</title>
   <style>
     :root {
-      --bg: #f4f5f8;
+      --bg: #f3f5f8;
       --panel: #ffffff;
-      --panel-soft: #eceff5;
-      --text: #111318;
-      --muted: #687083;
-      --line: #dde1ea;
-      --accent: #2563eb;
-      --accent-text: #ffffff;
-      --success: #15803d;
-      --warning: #b45309;
-      --danger: #9ca3af;
-      --mood: #2563eb;
-      --ink: #ffffff;
+      --panel-soft: #edf1f6;
+      --text: #10131a;
+      --muted: #627083;
+      --line: #dbe1ea;
+      --accent: #245fe8;
+      --accent-ink: #ffffff;
+      --mood: #245fe8;
+      --mood-ink: #ffffff;
+      --ok: #167447;
+      --warn: #9a5a00;
       --radius: 8px;
       font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
       color-scheme: light;
     }
 
     * { box-sizing: border-box; }
-
     [hidden] { display: none !important; }
 
     html,
@@ -36,39 +34,40 @@
       color: var(--text);
     }
 
+    body {
+      min-height: 100vh;
+      font-size: 16px;
+    }
+
+    button,
+    a {
+      font: inherit;
+    }
+
     button {
       border: 0;
       color: inherit;
-      font: inherit;
       cursor: pointer;
     }
 
-    button:focus-visible {
-      outline: 3px solid rgba(37, 99, 235, 0.35);
+    button:focus-visible,
+    a:focus-visible {
+      outline: 3px solid rgba(36, 95, 232, 0.32);
       outline-offset: 2px;
     }
 
-    .shell {
-      width: min(100%, 420px);
+    .app {
+      width: min(100%, 960px);
       min-height: 100vh;
       margin: 0 auto;
-      background: var(--bg);
-      display: flex;
-      flex-direction: column;
+      padding: 18px 20px 34px;
     }
 
     .topbar {
-      min-height: 56px;
-      padding: 10px 14px;
+      min-height: 48px;
       display: flex;
       align-items: center;
       gap: 10px;
-    }
-
-    .topbar-title {
-      flex: 1;
-      font-size: 17px;
-      font-weight: 800;
     }
 
     .icon-button {
@@ -80,70 +79,92 @@
       background: var(--panel-soft);
     }
 
+    .topbar-title {
+      flex: 1;
+      font-size: 18px;
+      font-weight: 850;
+    }
+
     .city-chip,
-    .small-chip {
+    .tag,
+    .pill {
       border-radius: 999px;
-      padding: 6px 10px;
       background: var(--panel-soft);
       color: var(--muted);
       font-size: 13px;
-      font-weight: 700;
+      font-weight: 800;
+    }
+
+    .city-chip {
+      padding: 7px 12px;
     }
 
     .view {
-      flex: 1;
       display: none;
-      padding: 4px 14px 96px;
+      padding-top: 22px;
     }
 
     .view.is-active {
       display: block;
-      animation: enter 180ms ease-out;
+      animation: enter 160ms ease-out;
     }
 
     @keyframes enter {
-      from { opacity: 0; transform: translateY(6px); }
+      from { opacity: 0; transform: translateY(5px); }
+    }
+
+    .hero,
+    .content-narrow {
+      width: min(100%, 720px);
+      margin: 0 auto;
+    }
+
+    .hero {
+      padding-top: clamp(10px, 5vh, 52px);
     }
 
     h1 {
-      margin: 8px 0 8px;
-      font-size: 28px;
-      line-height: 1.12;
+      margin: 0;
+      font-size: clamp(30px, 4vw, 48px);
+      line-height: 1.04;
       letter-spacing: 0;
     }
 
     h2 {
-      margin: 22px 0 10px;
-      font-size: 15px;
+      margin: 0;
+      font-size: 18px;
       line-height: 1.2;
     }
 
     h3 {
-      margin: 4px 0 6px;
-      font-size: 20px;
-      line-height: 1.2;
+      margin: 0;
+      font-size: 21px;
+      line-height: 1.18;
+      letter-spacing: 0;
     }
 
     p {
       margin: 0;
-      line-height: 1.42;
+      line-height: 1.45;
     }
 
     .lead {
-      margin-bottom: 20px;
+      max-width: 560px;
+      margin-top: 12px;
       color: var(--muted);
-      font-size: 15px;
+      font-size: 17px;
     }
 
     .mood-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 28px;
     }
 
     .mood-tile {
-      min-height: 128px;
-      padding: 14px;
+      min-height: 154px;
+      padding: 16px;
       border-radius: var(--radius);
       display: flex;
       flex-direction: column;
@@ -151,60 +172,82 @@
       text-align: left;
       background: var(--tile);
       color: var(--tile-ink);
+      box-shadow: 0 1px 0 rgba(15, 23, 42, 0.05);
+      transition: transform 120ms ease, box-shadow 120ms ease;
     }
 
-    .mood-tile:active,
-    .button:active,
-    .event-card:active {
-      transform: translateY(1px);
+    .mood-tile:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 32px rgba(15, 23, 42, 0.12);
     }
 
     .mood-icon {
-      font-size: 34px;
-      line-height: 1;
-      margin-bottom: auto;
+      width: 42px;
+      height: 42px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background: rgba(255, 255, 255, 0.2);
+      font-size: 24px;
+      font-weight: 900;
     }
 
     .mood-title {
-      margin-top: 18px;
-      font-size: 17px;
-      font-weight: 850;
-      line-height: 1.12;
+      margin-top: auto;
+      font-size: 19px;
+      font-weight: 900;
+      line-height: 1.08;
     }
 
     .mood-subtitle {
-      margin-top: 3px;
-      font-size: 13px;
+      margin-top: 5px;
+      font-size: 14px;
       opacity: 0.78;
     }
 
-    .mood-page {
-      min-height: 100vh;
+    .setup-band {
+      border-radius: var(--radius);
+      padding: 24px;
       background: var(--mood);
-      color: var(--ink);
+      color: var(--mood-ink);
     }
 
-    .mood-page .shell {
-      background: transparent;
+    .setup-band .lead {
+      color: color-mix(in srgb, var(--mood-ink) 76%, transparent);
     }
 
-    .mood-page .view {
-      color: var(--ink);
+    .setup-icon {
+      width: 48px;
+      height: 48px;
+      margin-bottom: 14px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background: color-mix(in srgb, var(--mood-ink) 18%, transparent);
+      font-size: 27px;
+      font-weight: 900;
     }
 
-    .mood-page .icon-button {
-      background: color-mix(in srgb, var(--ink) 16%, transparent);
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 14px;
     }
 
-    .mood-head {
-      margin: 4px 0 18px;
+    .control-group {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      padding: 14px;
     }
 
-    .mood-head-icon {
-      display: block;
+    .control-title {
       margin-bottom: 10px;
-      font-size: 48px;
-      line-height: 1;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 850;
+      text-transform: uppercase;
     }
 
     .chips {
@@ -216,49 +259,50 @@
     .chip {
       min-height: 40px;
       padding: 9px 14px;
-      border: 1px solid color-mix(in srgb, currentColor 42%, transparent);
+      border: 1px solid var(--line);
       border-radius: 999px;
-      background: transparent;
-      font-weight: 750;
+      background: var(--panel);
+      color: var(--text);
+      font-weight: 800;
     }
 
     .chip.is-selected {
-      background: var(--ink);
-      color: var(--mood);
-      border-color: var(--ink);
+      border-color: var(--mood);
+      background: var(--mood);
+      color: var(--mood-ink);
     }
 
     .switch-row {
       width: 100%;
-      min-height: 68px;
-      padding: 12px 14px;
+      min-height: 56px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 12px;
       border-radius: var(--radius);
-      background: color-mix(in srgb, var(--ink) 13%, transparent);
+      background: transparent;
       text-align: left;
     }
 
     .switch-title {
       display: block;
-      font-weight: 800;
+      font-weight: 850;
     }
 
     .switch-subtitle {
       display: block;
-      margin-top: 2px;
-      font-size: 13px;
-      opacity: 0.78;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 14px;
     }
 
     .switch {
-      width: 50px;
+      width: 52px;
       height: 30px;
+      flex: 0 0 auto;
       padding: 3px;
       border-radius: 999px;
-      background: color-mix(in srgb, var(--ink) 28%, transparent);
+      background: #cbd3df;
     }
 
     .switch::before {
@@ -267,51 +311,42 @@
       width: 24px;
       height: 24px;
       border-radius: 50%;
-      background: var(--mood);
+      background: #ffffff;
       transition: transform 160ms ease;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.22);
     }
 
     .switch.is-on {
-      background: var(--ink);
+      background: var(--mood);
     }
 
     .switch.is-on::before {
-      transform: translateX(20px);
+      transform: translateX(22px);
     }
 
-    .bottom-bar {
-      position: fixed;
-      left: 50%;
-      bottom: 0;
-      z-index: 10;
-      width: min(100%, 420px);
-      padding: 12px 14px 14px;
-      transform: translateX(-50%);
-      background: linear-gradient(to top, var(--bg) 76%, rgba(244, 245, 248, 0));
+    .actions {
+      width: min(100%, 720px);
+      margin: 18px auto 0;
+      display: flex;
+      gap: 10px;
     }
 
-    .mood-page .bottom-bar {
-      background: linear-gradient(to top, var(--mood) 76%, color-mix(in srgb, var(--mood) 0%, transparent));
-    }
-
-    .bar-note {
-      margin: 0 0 8px;
-      color: var(--muted);
-      font-size: 13px;
-      text-align: center;
-    }
-
-    .mood-page .bar-note {
-      color: color-mix(in srgb, var(--ink) 78%, transparent);
+    .button,
+    .inline-button {
+      min-height: 48px;
+      border-radius: var(--radius);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--accent);
+      color: var(--accent-ink);
+      font-weight: 900;
+      text-decoration: none;
     }
 
     .button {
       width: 100%;
-      min-height: 52px;
-      border-radius: var(--radius);
-      background: var(--accent);
-      color: var(--accent-text);
-      font-weight: 850;
+      padding: 0 18px;
       font-size: 16px;
     }
 
@@ -321,211 +356,278 @@
       border: 1px solid var(--line);
     }
 
-    .mood-page .button {
-      background: var(--ink);
-      color: var(--mood);
+    .result-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 18px;
+      margin: 0 auto 16px;
+      width: min(100%, 860px);
+    }
+
+    .result-head .lead {
+      margin-top: 7px;
+    }
+
+    .result-meta {
+      flex: 0 0 auto;
+      text-align: right;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .results-list {
+      width: min(100%, 860px);
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
     }
 
     .event-card,
     .detail-card,
-    .counter-card {
+    .counter {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04);
+    }
+
+    .event-card {
+      min-height: 286px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .event-card.is-top {
+      background: var(--mood);
+      color: var(--mood-ink);
+      border-color: transparent;
+    }
+
+    .event-card.is-top .meta,
+    .event-card.is-top .place {
+      color: color-mix(in srgb, var(--mood-ink) 78%, transparent);
+    }
+
+    .card-label {
+      align-self: flex-start;
+      margin-bottom: 12px;
+      padding: 5px 8px;
+      border-radius: 999px;
+      background: color-mix(in srgb, currentColor 12%, transparent);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 850;
+    }
+
+    .place {
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 750;
+    }
+
+    .why {
+      margin-top: 12px;
+      font-size: 15px;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 14px;
+    }
+
+    .tag {
+      padding: 4px 8px;
+      font-size: 12px;
+    }
+
+    .tag.warn {
+      background: #fff6df;
+      color: var(--warn);
+    }
+
+    .event-bottom {
+      margin-top: auto;
+      padding-top: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .price {
+      font-size: 18px;
+      font-weight: 950;
+    }
+
+    .inline-button {
+      min-width: 98px;
+      min-height: 38px;
+      padding: 0 14px;
+      font-size: 14px;
+    }
+
+    .event-card.is-top .inline-button {
+      background: var(--mood-ink);
+      color: var(--mood);
+    }
+
+    .detail-layout {
+      width: min(100%, 760px);
+      margin: 0 auto;
+      display: grid;
+      gap: 12px;
+    }
+
+    .detail-card {
+      padding: 18px;
+    }
+
+    .facts {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .fact {
       border: 1px solid var(--line);
       border-radius: var(--radius);
       background: var(--panel);
       padding: 14px;
     }
 
-    .event-card {
-      margin-bottom: 10px;
-      text-align: left;
-    }
-
-    .event-card.is-top {
-      background: var(--mood);
-      color: var(--ink);
-      border-color: transparent;
-    }
-
-    .card-label {
-      display: inline-block;
-      margin-bottom: 10px;
-      padding: 5px 8px;
-      border-radius: 999px;
-      background: color-mix(in srgb, currentColor 10%, transparent);
-      font-size: 12px;
-      font-weight: 800;
-    }
-
-    .meta {
-      color: var(--muted);
-      font-size: 13px;
-      font-weight: 700;
-    }
-
-    .event-card.is-top .meta {
-      color: color-mix(in srgb, var(--ink) 78%, transparent);
-    }
-
-    .why {
-      margin-top: 10px;
-      font-size: 15px;
-    }
-
-    .card-footer {
-      margin-top: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-    }
-
-    .price {
-      font-size: 17px;
-      font-weight: 850;
-    }
-
-    .inline-button {
-      min-width: 104px;
-      min-height: 38px;
-      border-radius: 999px;
-      background: var(--accent);
-      color: var(--accent-text);
-      font-size: 14px;
-      font-weight: 850;
-    }
-
-    .event-card.is-top .inline-button {
-      background: var(--ink);
-      color: var(--mood);
-    }
-
-    .tags {
-      margin-top: 10px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-    }
-
-    .tag {
-      border-radius: 999px;
-      padding: 4px 8px;
-      background: var(--panel-soft);
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 800;
-    }
-
-    .tag.warn {
-      background: #fff7ed;
-      color: var(--warning);
-    }
-
-    .facts {
-      margin: 12px 0;
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      background: var(--panel);
-    }
-
-    .fact {
-      display: flex;
-      justify-content: space-between;
-      gap: 14px;
-      padding: 12px 14px;
-    }
-
-    .fact + .fact {
-      border-top: 1px solid var(--line);
+    .fact span {
+      display: block;
     }
 
     .fact span:first-child {
+      margin-bottom: 6px;
       color: var(--muted);
+      font-size: 13px;
+      font-weight: 850;
     }
 
     .fact span:last-child {
-      max-width: 62%;
-      text-align: right;
-      font-weight: 750;
+      font-weight: 850;
     }
 
-    .counter-grid {
+    .invite-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
+      gap: 10px;
       margin-top: 12px;
     }
 
     .counter {
-      min-height: 96px;
-      padding: 12px 8px;
-      border-radius: var(--radius);
-      background: var(--panel);
-      border: 1px solid var(--line);
+      min-height: 112px;
+      padding: 14px;
       text-align: center;
     }
 
     .counter strong {
       display: block;
-      font-size: 26px;
+      font-size: 30px;
       line-height: 1;
     }
 
     .counter span {
       display: block;
-      margin-top: 6px;
+      margin-top: 7px;
       color: var(--muted);
       font-size: 13px;
-      font-weight: 750;
+      font-weight: 850;
     }
 
     .counter small {
       display: block;
-      margin-top: 6px;
+      margin-top: 7px;
       color: var(--muted);
-      font-size: 12px;
       overflow-wrap: anywhere;
     }
 
     .success-badge {
-      width: 56px;
-      height: 56px;
-      margin-bottom: 12px;
-      border-radius: 50%;
+      width: 58px;
+      height: 58px;
+      margin-bottom: 14px;
+      border-radius: 999px;
       display: grid;
       place-items: center;
-      background: #dcfce7;
-      color: var(--success);
-      font-size: 30px;
-      font-weight: 900;
+      background: #dff7e9;
+      color: var(--ok);
+      font-size: 31px;
+      font-weight: 950;
     }
 
     .live-row {
-      margin-top: 14px;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 9px;
+      margin-top: 12px;
       color: var(--muted);
-      font-size: 13px;
-      font-weight: 700;
+      font-size: 14px;
+      font-weight: 800;
     }
 
     .live-dot {
       width: 8px;
       height: 8px;
-      border-radius: 50%;
-      background: var(--success);
-      box-shadow: 0 0 0 5px rgba(21, 128, 61, 0.12);
+      border-radius: 999px;
+      background: var(--ok);
+      box-shadow: 0 0 0 5px rgba(22, 116, 71, 0.12);
     }
 
-    @media (max-width: 360px) {
-      .mood-grid { gap: 8px; }
-      .mood-tile { min-height: 118px; padding: 12px; }
-      h1 { font-size: 25px; }
+    @media (max-width: 780px) {
+      .app {
+        padding: 10px 14px 24px;
+      }
+
+      .hero {
+        padding-top: 10px;
+      }
+
+      .mood-grid,
+      .controls,
+      .results-list,
+      .facts {
+        grid-template-columns: 1fr;
+      }
+
+      .mood-grid {
+        gap: 10px;
+      }
+
+      .mood-tile {
+        min-height: 124px;
+      }
+
+      .result-head {
+        display: block;
+      }
+
+      .result-meta {
+        margin-top: 10px;
+        text-align: left;
+      }
+
+      .event-card {
+        min-height: 0;
+      }
     }
   </style>
 </head>
 <body>
-  <div id="page" class="shell">
+  <div class="app">
     <header class="topbar">
       <button id="backButton" class="icon-button" type="button" aria-label="Назад" hidden>
         <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
@@ -538,135 +640,328 @@
 
     <main>
       <section id="moodView" class="view is-active" data-title="Вечер">
-        <h1>Какое у тебя настроение?</h1>
-        <p class="lead">Выбери одно, а мы оставим только три варианта на вечер.</p>
-        <div id="moodGrid" class="mood-grid"></div>
+        <div class="hero">
+          <h1>Какое у тебя настроение?</h1>
+          <p class="lead">Выбери состояние, день и бюджет. Прототип покажет три живых варианта без бесконечной афиши.</p>
+          <div id="moodGrid" class="mood-grid"></div>
+        </div>
       </section>
 
       <section id="setupView" class="view" data-title="Настройка">
-        <div class="mood-head">
-          <span id="setupIcon" class="mood-head-icon"></span>
-          <h1 id="setupTitle"></h1>
-          <p id="setupLead" class="lead"></p>
+        <div class="content-narrow">
+          <div class="setup-band">
+            <div id="setupIcon" class="setup-icon"></div>
+            <h1 id="setupTitle"></h1>
+            <p id="setupLead" class="lead"></p>
+          </div>
+          <div class="controls">
+            <div class="control-group">
+              <div class="control-title">Когда</div>
+              <div class="chips" aria-label="День">
+                <button class="chip is-selected" type="button" data-day="today">Сегодня</button>
+                <button class="chip" type="button" data-day="tomorrow">Завтра</button>
+                <button class="chip" type="button" data-day="saturday">В субботу</button>
+              </div>
+            </div>
+            <div class="control-group">
+              <div class="control-title">Деньги</div>
+              <button id="budgetButton" class="switch-row" type="button" role="switch" aria-checked="false">
+                <span>
+                  <span class="switch-title">Бюджет поджимает</span>
+                  <span class="switch-subtitle">Сначала события до 500 ₽</span>
+                </span>
+                <span id="budgetSwitch" class="switch" aria-hidden="true"></span>
+              </button>
+            </div>
+          </div>
         </div>
-        <h2>Когда</h2>
-        <div class="chips" aria-label="День">
-          <button class="chip is-selected" type="button" data-day="today">Сегодня</button>
-          <button class="chip" type="button" data-day="tomorrow">Завтра</button>
-          <button class="chip" type="button" data-day="saturday">В субботу</button>
+        <div class="actions">
+          <button id="showResultsButton" class="button" type="button">Показать 3 варианта</button>
         </div>
-        <h2>Деньги</h2>
-        <button id="budgetButton" class="switch-row" type="button" role="switch" aria-checked="false">
-          <span>
-            <span class="switch-title">Бюджет поджимает</span>
-            <span class="switch-subtitle">Сначала события до 300 рублей</span>
-          </span>
-          <span id="budgetSwitch" class="switch" aria-hidden="true"></span>
-        </button>
       </section>
 
       <section id="resultsView" class="view" data-title="Три варианта">
-        <h1 id="resultsTitle"></h1>
-        <p id="resultsLead" class="lead"></p>
-        <div id="resultsList"></div>
+        <div class="result-head">
+          <div>
+            <h1 id="resultsTitle"></h1>
+            <p id="resultsLead" class="lead"></p>
+          </div>
+          <div id="resultMeta" class="result-meta"></div>
+        </div>
+        <div id="resultsList" class="results-list"></div>
+        <div class="actions">
+          <button id="anotherMoodButton" class="button secondary" type="button">Другое настроение</button>
+        </div>
       </section>
 
       <section id="planView" class="view" data-title="План">
-        <article class="detail-card">
-          <span id="planWhen" class="meta"></span>
-          <h1 id="planTitle"></h1>
-          <p id="planWhy"></p>
-        </article>
-        <div class="facts">
-          <div class="fact"><span>Где</span><span id="planPlace"></span></div>
-          <div class="fact"><span>Когда</span><span id="planTime"></span></div>
-          <div class="fact"><span>Цена</span><span id="planPrice"></span></div>
+        <div class="detail-layout">
+          <article class="detail-card">
+            <span id="planWhen" class="meta"></span>
+            <h1 id="planTitle"></h1>
+            <p id="planWhy" class="lead"></p>
+          </article>
+          <div class="facts">
+            <div class="fact"><span>Где</span><span id="planPlace"></span></div>
+            <div class="fact"><span>Когда</span><span id="planTime"></span></div>
+            <div class="fact"><span>Цена</span><span id="planPrice"></span></div>
+          </div>
+          <div class="actions">
+            <a id="ticketButton" class="button secondary" href="#" target="_blank" rel="noreferrer">Открыть билеты</a>
+            <button id="inviteButton" class="button" type="button">Позвать чат</button>
+          </div>
         </div>
-        <button id="ticketButton" class="button secondary" type="button">Билеты на сайте организатора</button>
       </section>
 
       <section id="inviteView" class="view" data-title="Приглашение">
-        <div class="success-badge">✓</div>
-        <h1>Позвали!</h1>
-        <p class="lead">Карточка уже в чате, ответы друзей появятся здесь.</p>
-        <article class="detail-card">
-          <span id="inviteWhen" class="meta"></span>
-          <h3 id="inviteTitle"></h3>
-          <p id="invitePlace" class="meta"></p>
-        </article>
-        <div class="counter-grid">
-          <div class="counter">
-            <strong id="goingCount">1</strong>
-            <span>Иду</span>
-            <small id="goingNames">Ты</small>
+        <div class="detail-layout">
+          <div class="detail-card">
+            <div class="success-badge">✓</div>
+            <h1>Позвали</h1>
+            <p class="lead">Карточка ушла в чат. В прототипе ответы друзей обновляются сами.</p>
           </div>
-          <div class="counter">
-            <strong id="maybeCount">0</strong>
-            <span>Может</span>
-            <small id="maybeNames">-</small>
+          <article class="detail-card">
+            <span id="inviteWhen" class="meta"></span>
+            <h3 id="inviteTitle"></h3>
+            <p id="invitePlace" class="place"></p>
+          </article>
+          <div class="invite-grid">
+            <div class="counter">
+              <strong id="goingCount">1</strong>
+              <span>Иду</span>
+              <small id="goingNames">Ты</small>
+            </div>
+            <div class="counter">
+              <strong id="maybeCount">0</strong>
+              <span>Может</span>
+              <small id="maybeNames">-</small>
+            </div>
+            <div class="counter">
+              <strong id="noCount">0</strong>
+              <span>Не могу</span>
+              <small id="noNames">-</small>
+            </div>
           </div>
-          <div class="counter">
-            <strong id="noCount">0</strong>
-            <span>Не могу</span>
-            <small id="noNames">-</small>
+          <div class="live-row"><span class="live-dot"></span>Обновляется само</div>
+          <div class="actions">
+            <button id="doneButton" class="button" type="button">Готово</button>
           </div>
         </div>
-        <div class="live-row"><span class="live-dot"></span>Обновляется само</div>
       </section>
     </main>
-
-    <div class="bottom-bar">
-      <p id="barNote" class="bar-note" hidden></p>
-      <button id="primaryButton" class="button" type="button">Продолжить</button>
-    </div>
   </div>
 
   <script>
     const moods = [
-      { id: "charged", title: "Заряжен(а)", hint: "Музыка и танцы", icon: "⚡", color: "#ff5b22", ink: "#ffffff" },
-      { id: "release", title: "Выпустить пар", hint: "Спорт и смех", icon: "🥊", color: "#ffc83d", ink: "#1b1300" },
-      { id: "exhale", title: "Хочу выдохнуть", hint: "Природа и тишина", icon: "🌿", color: "#b9e4cc", ink: "#0b2a1b" },
-      { id: "blue", title: "Погрустить красиво", hint: "Арт и кино", icon: "🌧", color: "#3f5bdb", ink: "#ffffff" },
-      { id: "learn", title: "Узнать новое", hint: "Лекции и мастер-классы", icon: "🧠", color: "#0f7c86", ink: "#ffffff" },
-      { id: "wild", title: "Удиви меня", hint: "Три разных настроения", icon: "🎲", color: "#6d4bff", ink: "#ffffff" }
+      { id: "charged", title: "Заряжен(а)", hint: "Музыка, танцы, громкий вечер", icon: "↯", color: "#f2562d", ink: "#ffffff" },
+      { id: "release", title: "Выпустить пар", hint: "Рок, стендап, много энергии", icon: "!", color: "#f4bf3c", ink: "#221600" },
+      { id: "exhale", title: "Хочу выдохнуть", hint: "Прогулки, город, спокойный ритм", icon: "≈", color: "#a9dbc0", ink: "#0d281a" },
+      { id: "blue", title: "Погрустить красиво", hint: "Театр, музыка, сильные эмоции", icon: "♪", color: "#4264d8", ink: "#ffffff" },
+      { id: "learn", title: "Узнать новое", hint: "Культура, история, необычный формат", icon: "?", color: "#0e7d84", ink: "#ffffff" },
+      { id: "wild", title: "Удиви меня", hint: "Три разных идеи на вечер", icon: "*", color: "#6b4bf0", ink: "#ffffff" }
     ];
+
+    const dayTitles = {
+      today: "Сегодня, 28 сентября",
+      tomorrow: "Завтра, 29 сентября",
+      saturday: "В субботу, 3 октября"
+    };
 
     const events = [
       {
-        id: "street-dance",
-        title: "Танцы на набережной",
-        place: "Набережная озера Кабан",
-        when: "Сегодня, 17:00",
-        price: 0,
-        why: "Музыка под открытым небом, вход свободный",
-        tags: ["танцы", "бесплатно"],
-        mood: "charged"
+        id: "night-kazan-28",
+        title: "По ночной Казани с колесом обозрения",
+        place: "Экскурсия по ночной Казани",
+        day: "today",
+        time: "20:00",
+        price: 600,
+        why: "Неспешная прогулка и вид сверху, чтобы выдохнуть и заново увидеть город.",
+        tags: ["экскурсия", "город"],
+        moods: ["exhale", "learn", "wild"],
+        url: "https://afisha.yandex.ru/kazan/excursions/places/ekskursiia-po-nochnoi-kazani-s-kataniem-na-kolese-obozreniia-vokrug-sveta/schedule/september-2026"
       },
       {
-        id: "quiz-party",
-        title: "Квиз-вечеринка",
-        place: "Бар на Профсоюзной",
-        when: "Сегодня, 19:30",
+        id: "world-cinema-28",
+        title: "Музыка мирового кинематографа",
+        place: "Театр на Булаке",
+        day: "today",
+        time: "19:00",
+        price: 1500,
+        why: "Саундтреки знакомых фильмов в живом исполнении — мягко и атмосферно.",
+        tags: ["концерт", "кино"],
+        moods: ["blue", "exhale", "wild"],
+        url: "https://afisha.yandex.ru/kazan/concert/muzyka-mirovogo-kinematografa-2026"
+      },
+      {
+        id: "galiya-28",
+        title: "Галия",
+        place: "Театр им. Камала, новое здание",
+        day: "today",
+        time: "13:00",
+        price: 500,
+        why: "Театральный вариант для тихого, вдумчивого настроения.",
+        tags: ["театр", "до 500 ₽"],
+        moods: ["blue", "learn"],
+        url: "https://afisha.yandex.ru/kazan/theatre/places/teatr-im-kamala-novoe-zdanie/schedule/september-2026"
+      },
+      {
+        id: "rubalskaya-28",
+        title: "Лариса Рубальская. Юбилейный тур",
+        place: "Уникс",
+        day: "today",
+        time: "19:00",
+        price: 1500,
+        why: "Лиричный вечер со стихами и историями, когда хочется красиво погрустить.",
+        tags: ["концерт", "поэзия"],
+        moods: ["blue"],
+        url: "https://afisha.yandex.ru/kazan/concert/larisa-rubalskaia-iubileinyi-tour"
+      },
+      {
+        id: "ernest-29",
+        title: "С любовью, Эрнест",
+        place: "More",
+        day: "tomorrow",
+        time: "19:00",
+        price: 3220,
+        why: "Камерный иммерсивный театр, когда хочется красоты и близкой дистанции.",
+        tags: ["иммерсивно", "театр"],
+        moods: ["blue", "wild"],
+        url: "https://afisha.yandex.ru/kazan/other/places/more-kazan/schedule/september-2026"
+      },
+      {
+        id: "kamala-gergeri-29",
+        title: "Гөргөри кияүләре / Зятья Гэргэри",
+        place: "Театр им. Камала, новое здание",
+        day: "tomorrow",
+        time: "19:00",
+        price: 500,
+        why: "Комедийный спектакль без тяжелого входа, чтобы вечер стал легче.",
+        tags: ["театр", "комедия"],
+        moods: ["release", "exhale", "learn"],
+        url: "https://afisha.yandex.ru/kazan/theatre/places/teatr-im-kamala-novoe-zdanie/schedule/september-2026"
+      },
+      {
+        id: "kaleidoscope-29",
+        title: "Kaleidoscope. Туган як",
+        place: "Kaleidoscope",
+        day: "tomorrow",
+        time: "19:00",
+        price: 10000,
+        why: "Необычный формат про культуру и место, если хочется нового опыта.",
+        tags: ["иммерсивно", "культура"],
+        moods: ["learn", "wild"],
+        url: "https://afisha.yandex.ru/kazan/theatre/places/kaleidoscope/schedule/september-2026"
+      },
+      {
+        id: "night-kazan-29",
+        title: "По ночной Казани с колесом обозрения",
+        place: "Экскурсия по ночной Казани",
+        day: "tomorrow",
+        time: "20:00",
+        price: 600,
+        why: "Городская прогулка на вечер, когда хочется переключиться без толпы и драйва.",
+        tags: ["экскурсия", "город"],
+        moods: ["exhale", "learn"],
+        url: "https://afisha.yandex.ru/kazan/excursions/places/ekskursiia-po-nochnoi-kazani-s-kataniem-na-kolese-obozreniia-vokrug-sveta/schedule/september-2026"
+      },
+      {
+        id: "vorovayki-30",
+        title: "Воровайки",
+        place: "Максимилианс",
+        day: "tomorrow",
+        time: "20:00",
+        price: 1800,
+        why: "Громкий концерт для вечера, когда нужно сбросить напряжение и подпевать.",
+        tags: ["концерт", "шансон"],
+        moods: ["charged", "release"],
+        url: "https://afisha.yandex.ru/kazan/concert/vorovayki-2026"
+      },
+      {
+        id: "ds-crew-03",
+        title: "DS CREW",
+        place: "Казань Экспо",
+        day: "saturday",
+        time: "19:00",
+        price: 1800,
+        why: "Много движения и визуального драйва для настроения «заряжен».",
+        tags: ["танцы", "шоу"],
+        moods: ["charged", "wild"],
+        url: "https://afisha.yandex.ru/kazan/concert/oct-3"
+      },
+      {
+        id: "mia-boyka-03",
+        title: "Mia Boyka",
+        place: "КРК Пирамида",
+        day: "saturday",
+        time: "19:00",
+        price: 1250,
+        why: "Поп-концерт для легкого драйва, подпевания и вечернего заряда.",
+        tags: ["концерт", "поп"],
+        moods: ["charged"],
+        url: "https://afisha.yandex.ru/kazan/concert/oct-3"
+      },
+      {
+        id: "placebo-mcr-03",
+        title: "Placebo & MCR Tribute",
+        place: "Big Twin Arena",
+        day: "saturday",
+        time: "19:00",
+        price: 1400,
+        why: "Громкий рок-вечер, чтобы выпустить пар и прожить эмоции на максимум.",
+        tags: ["рок", "трибьют"],
+        moods: ["release", "charged"],
+        url: "https://afisha.yandex.ru/kazan/concert/oct-3"
+      },
+      {
+        id: "simple-music-03",
+        title: "Simple Music. Ханс Циммер",
+        place: "Дом Simple Music",
+        day: "saturday",
+        time: "18:00",
+        price: 1500,
+        why: "Киномузыка с размахом, когда хочется эмоций без лишней суеты.",
+        tags: ["концерт", "кино"],
+        moods: ["blue", "exhale"],
+        url: "https://afisha.yandex.ru/kazan/concert/simple-music-khans-tsimmer"
+      },
+      {
+        id: "kamala-apipa-03",
+        title: "Әпипә / Апипа",
+        place: "Театр им. Камала, новое здание",
+        day: "saturday",
+        time: "15:00",
         price: 300,
-        why: "Команда, азарт и смех с первого раунда",
-        tags: ["игры", "юмор"],
-        mood: "release"
+        why: "Дневной театр на легкой энергии, чтобы не перегружать вечер.",
+        tags: ["театр", "до 500 ₽"],
+        moods: ["exhale", "learn"],
+        url: "https://afisha.yandex.ru/kazan/theatre/places/teatr-im-kamala-novoe-zdanie/schedule/october-2026"
       },
       {
-        id: "indie-concert",
-        title: "Концерт инди-группы",
-        place: "Клуб на Баумана",
-        when: "Сегодня, 20:00",
-        price: 800,
-        why: "Живой звук и зал, который поет хором",
-        tags: ["музыка", "дороже 300 ₽"],
-        mood: "charged",
-        overBudget: true,
-        ticketUrl: true
+        id: "kariev-life-03",
+        title: "Гомер моңы / Мелодия жизни",
+        place: "ТЮЗ им. Кариева",
+        day: "saturday",
+        time: "17:00",
+        price: 450,
+        why: "Тихий театральный вариант, если хочется душевного вечера.",
+        tags: ["театр", "до 500 ₽"],
+        moods: ["blue", "learn"],
+        url: "https://afisha.yandex.ru/kazan/theatre/places/tiuz-im-karieva/schedule/october-2026"
+      },
+      {
+        id: "chestny-03",
+        title: "Честный",
+        place: "Korston",
+        day: "saturday",
+        time: "20:00",
+        price: 2400,
+        why: "Плотный вечерний концерт для тех, кому нужно больше энергии и прямого текста.",
+        tags: ["концерт", "рэп"],
+        moods: ["charged", "release"],
+        url: "https://afisha.yandex.ru/kazan/concert/oct-3"
       }
     ];
 
-    const screenOrder = ["mood", "setup", "results", "plan", "invite"];
     const state = {
       screen: "mood",
       history: [],
@@ -677,12 +972,9 @@
       inviteStep: 0
     };
 
-    const page = document.getElementById("page");
-    const topTitle = document.getElementById("topTitle");
     const backButton = document.getElementById("backButton");
-    const primaryButton = document.getElementById("primaryButton");
-    const bottomBar = document.querySelector(".bottom-bar");
-    const barNote = document.getElementById("barNote");
+    const topTitle = document.getElementById("topTitle");
+    const moodGrid = document.getElementById("moodGrid");
     const budgetButton = document.getElementById("budgetButton");
     const budgetSwitch = document.getElementById("budgetSwitch");
 
@@ -690,13 +982,17 @@
       return moods.find((mood) => mood.id === id) || moods[0];
     }
 
-    function priceLabel(price) {
-      return price ? `${price} ₽` : "Бесплатно";
-    }
-
     function setMoodVars(mood) {
       document.documentElement.style.setProperty("--mood", mood.color);
-      document.documentElement.style.setProperty("--ink", mood.ink);
+      document.documentElement.style.setProperty("--mood-ink", mood.ink);
+    }
+
+    function priceLabel(price) {
+      return price ? `${price.toLocaleString("ru-RU")} ₽` : "Бесплатно";
+    }
+
+    function whenLabel(event) {
+      return `${dayTitles[event.day]}, ${event.time}`;
     }
 
     function go(screen) {
@@ -705,15 +1001,49 @@
       render();
     }
 
+    function resetToMood() {
+      state.history = [];
+      state.screen = "mood";
+      render();
+    }
+
     function back() {
       state.screen = state.history.pop() || "mood";
       render();
     }
 
+    function uniqueById(items) {
+      return [...new Map(items.map((item) => [item.id, item])).values()];
+    }
+
+    function pickEvents() {
+      if (state.mood.id === "wild") {
+        return [
+          events.find((event) => event.id === "kaleidoscope-29"),
+          events.find((event) => event.id === "placebo-mcr-03"),
+          events.find((event) => event.id === "night-kazan-28")
+        ].filter(Boolean);
+      }
+
+      const moodMatches = events.filter((event) => event.moods.includes(state.mood.id));
+      const sameDay = moodMatches.filter((event) => event.day === state.day);
+      const otherDays = moodMatches.filter((event) => event.day !== state.day);
+      let picked = uniqueById([...sameDay, ...otherDays, ...events]);
+
+      if (state.budget) {
+        picked = picked.sort((a, b) => {
+          const aCheap = a.price <= 500 ? 0 : 1;
+          const bCheap = b.price <= 500 ? 0 : 1;
+          return aCheap - bCheap || a.price - b.price;
+        });
+      }
+
+      return picked.slice(0, 3);
+    }
+
     function renderMoods() {
-      document.getElementById("moodGrid").innerHTML = moods.map((mood) => `
-        <button class="mood-tile" type="button" data-mood="${mood.id}"
-          style="--tile:${mood.color};--tile-ink:${mood.ink}">
+      moodGrid.innerHTML = moods.map((mood) => `
+        <button class="mood-tile" type="button" data-mood="${mood.id}" style="--tile:${mood.color};--tile-ink:${mood.ink}">
           <span class="mood-icon">${mood.icon}</span>
           <span class="mood-title">${mood.title}</span>
           <span class="mood-subtitle">${mood.hint}</span>
@@ -722,10 +1052,9 @@
     }
 
     function renderSetup() {
-      const mood = state.mood;
-      document.getElementById("setupIcon").textContent = mood.icon;
-      document.getElementById("setupTitle").textContent = mood.title;
-      document.getElementById("setupLead").textContent = mood.hint;
+      document.getElementById("setupIcon").textContent = state.mood.icon;
+      document.getElementById("setupTitle").textContent = state.mood.title;
+      document.getElementById("setupLead").textContent = state.mood.hint;
       document.querySelectorAll("[data-day]").forEach((button) => {
         button.classList.toggle("is-selected", button.dataset.day === state.day);
       });
@@ -734,46 +1063,44 @@
     }
 
     function eventCard(event, index) {
-      const mood = moodById(event.mood);
-      const tags = event.tags.map((tag) => `<span class="tag ${tag.includes("дороже") ? "warn" : ""}">${tag}</span>`).join("");
+      const tags = event.tags.map((tag) => `<span class="tag ${event.price > 500 && state.budget ? "warn" : ""}">${tag}</span>`).join("");
       return `
-        <button class="event-card ${index === 0 ? "is-top" : ""}" type="button" data-event="${event.id}"
-          style="--mood:${mood.color};--ink:${mood.ink}">
+        <article class="event-card ${index === 0 ? "is-top" : ""}">
           ${index === 0 ? '<span class="card-label">Мы бы пошли сюда</span>' : ""}
-          <span class="meta">${event.when}</span>
+          <span class="meta">${whenLabel(event)}</span>
           <h3>${event.title}</h3>
-          <p class="meta">${event.place}</p>
+          <p class="place">${event.place}</p>
           <p class="why">${event.why}</p>
           <div class="tags">${tags}</div>
-          <div class="card-footer">
+          <div class="event-bottom">
             <span class="price">${priceLabel(event.price)}</span>
-            <span class="inline-button">Выбрать</span>
+            <button class="inline-button" type="button" data-event="${event.id}">Выбрать</button>
           </div>
-        </button>
+        </article>
       `;
     }
 
     function renderResults() {
+      const picked = pickEvents();
       document.getElementById("resultsTitle").textContent = `${state.mood.icon} ${state.mood.title}`;
       document.getElementById("resultsLead").textContent = state.budget
-        ? "Сначала показываем варианты до 300 рублей."
+        ? "Сначала недорогие варианты. Если идеальных дешевых нет, добавляем лучший запасной."
         : "Три варианта вместо бесконечной афиши.";
-      document.getElementById("resultsList").innerHTML = events.map(eventCard).join("");
+      document.getElementById("resultMeta").textContent = `${dayTitles[state.day]} · ${state.budget ? "до 500 ₽ в приоритете" : "без лимита"}`;
+      document.getElementById("resultsList").innerHTML = picked.map(eventCard).join("");
     }
 
     function renderPlan() {
-      const event = state.event;
-      document.getElementById("planWhen").textContent = event.when;
-      document.getElementById("planTitle").textContent = event.title;
-      document.getElementById("planWhy").textContent = event.why;
-      document.getElementById("planPlace").textContent = event.place;
-      document.getElementById("planTime").textContent = event.when;
-      document.getElementById("planPrice").textContent = priceLabel(event.price);
-      document.getElementById("ticketButton").hidden = !event.ticketUrl;
+      document.getElementById("planWhen").textContent = whenLabel(state.event);
+      document.getElementById("planTitle").textContent = state.event.title;
+      document.getElementById("planWhy").textContent = state.event.why;
+      document.getElementById("planPlace").textContent = state.event.place;
+      document.getElementById("planTime").textContent = whenLabel(state.event);
+      document.getElementById("planPrice").textContent = priceLabel(state.event.price);
+      document.getElementById("ticketButton").href = state.event.url;
     }
 
     function renderInvite() {
-      const event = state.event;
       const steps = [
         { going: ["Ты"], maybe: [], no: [] },
         { going: ["Ты", "Аня"], maybe: ["Илья"], no: [] },
@@ -782,9 +1109,9 @@
       const answers = steps[state.inviteStep % steps.length];
       state.inviteStep += 1;
 
-      document.getElementById("inviteWhen").textContent = event.when;
-      document.getElementById("inviteTitle").textContent = event.title;
-      document.getElementById("invitePlace").textContent = event.place;
+      document.getElementById("inviteWhen").textContent = whenLabel(state.event);
+      document.getElementById("inviteTitle").textContent = state.event.title;
+      document.getElementById("invitePlace").textContent = state.event.place;
       document.getElementById("goingCount").textContent = answers.going.length;
       document.getElementById("maybeCount").textContent = answers.maybe.length;
       document.getElementById("noCount").textContent = answers.no.length;
@@ -794,22 +1121,9 @@
     }
 
     function renderChrome() {
-      const isMoodPage = state.screen === "setup";
-      document.body.classList.toggle("mood-page", isMoodPage);
-      page.classList.toggle("shell", true);
-      topTitle.textContent = document.getElementById(`${state.screen}View`).dataset.title;
+      const view = document.getElementById(`${state.screen}View`);
+      topTitle.textContent = view.dataset.title;
       backButton.hidden = state.history.length === 0;
-      bottomBar.hidden = state.screen === "mood";
-
-      barNote.hidden = true;
-      if (state.screen === "setup") primaryButton.textContent = "Показать 3 варианта";
-      if (state.screen === "results") primaryButton.textContent = "Другое настроение";
-      if (state.screen === "plan") {
-        primaryButton.textContent = "Позвать чат";
-        barNote.hidden = false;
-        barNote.textContent = "Бот пришлет карточку с кнопками Иду / Может / Не могу";
-      }
-      if (state.screen === "invite") primaryButton.textContent = "Готово";
     }
 
     function render() {
@@ -855,25 +1169,13 @@
     });
 
     backButton.addEventListener("click", back);
-
-    primaryButton.addEventListener("click", () => {
-      if (state.screen === "setup") go("results");
-      else if (state.screen === "results") {
-        state.history = [];
-        go("mood");
-      } else if (state.screen === "plan") {
-        state.inviteStep = 0;
-        go("invite");
-      } else if (state.screen === "invite") {
-        state.history = [];
-        state.screen = "mood";
-        render();
-      }
+    document.getElementById("showResultsButton").addEventListener("click", () => go("results"));
+    document.getElementById("anotherMoodButton").addEventListener("click", resetToMood);
+    document.getElementById("inviteButton").addEventListener("click", () => {
+      state.inviteStep = 0;
+      go("invite");
     });
-
-    document.getElementById("ticketButton").addEventListener("click", () => {
-      alert("В прототипе это ссылка на сайт организатора.");
-    });
+    document.getElementById("doneButton").addEventListener("click", resetToMood);
 
     setInterval(() => {
       if (state.screen === "invite") renderInvite();
