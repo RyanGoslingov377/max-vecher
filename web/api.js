@@ -9,18 +9,25 @@ async function request(path, options = {}) {
   const headers = { ...(options.headers || {}) };
   if (initData()) headers["X-Max-Init-Data"] = initData();
   if (options.body) headers["Content-Type"] = "application/json";
-  const res = await fetch(path, { ...options, headers });
+  let res;
+  try {
+    res = await fetch(path, { ...options, headers });
+  } catch {
+    throw new Error("Не получилось связаться с сервером. Проверь интернет и попробуй ещё раз.");
+  }
+  const body = await res.json().catch(() => ({}));
   if (!res.ok) {
     // Сервер присылает ошибку как {"detail": "текст по-русски"} — его и показываем
-    const body = await res.json().catch(() => ({}));
     throw new Error(typeof body.detail === "string" ? body.detail : `Ошибка сервера (${res.status})`);
   }
-  return res.json();
+  return body;
 }
 
 // Три события под настроение: {mood, day, budget, results: [{event, mood, score, over_budget}]}
-export const getPick = (mood, day, budget) =>
-  request(`/api/pick?mood=${mood}&day=${day}&budget=${budget ? 1 : 0}`);
+export function getPick(mood, day, budget) {
+  const params = new URLSearchParams({ mood, day, budget: budget ? "1" : "0" });
+  return request(`/api/pick?${params}`);
+}
 
 // Кто и из какого чата открыл мини-приложение: {user, chat, start_param}
 export const getMe = () => request("/api/me");
