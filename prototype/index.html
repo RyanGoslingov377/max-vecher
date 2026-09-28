@@ -962,13 +962,251 @@
       }
     ];
 
+    const extraEvents = [
+      {
+        id: "big-mic-28",
+        title: "Большой микрофон Comedy Crew",
+        place: "Стендап-клуб Comedy Crew",
+        day: "today",
+        time: "20:00",
+        price: 400,
+        why: "Недорогой стендап на вечер, когда хочется смеяться и сбросить лишнее.",
+        tags: ["стендап", "юмор", "до 500 ₽"],
+        nrg: 2,
+        dep: 1,
+        growth: false,
+        kind: "standup",
+        url: "https://afisha.yandex.ru/kazan/standup/oct"
+      },
+      {
+        id: "big-mic-29",
+        title: "Большой микрофон Comedy Crew",
+        place: "Стендап-клуб Comedy Crew",
+        day: "tomorrow",
+        time: "20:00",
+        price: 400,
+        why: "Живой микрофон с короткими сетами — быстро, шумно и без театральной паузы.",
+        tags: ["стендап", "юмор", "до 500 ₽"],
+        nrg: 2,
+        dep: 1,
+        growth: false,
+        kind: "standup",
+        url: "https://afisha.yandex.ru/kazan/standup/oct"
+      },
+      {
+        id: "chak-chak-29",
+        title: "Мастер-класс по приготовлению чак-чака",
+        place: "Тайны Сююмбике",
+        day: "tomorrow",
+        time: "14:00",
+        price: 1200,
+        why: "Руки заняты, голова отдыхает, а домой можно уйти с новым навыком.",
+        tags: ["мастер-класс", "еда", "культура"],
+        nrg: 1,
+        dep: 0,
+        growth: true,
+        kind: "masterclass",
+        url: "https://afisha.yandex.ru/kazan/selections/all-events-masterclass?marketing=weekly-cinema-click"
+      },
+      {
+        id: "andrey-atlas-01",
+        title: "Андрей Атлас",
+        place: "Stand Up Club Kazan",
+        dateLabel: "1 октября",
+        time: "21:30",
+        price: 2000,
+        why: "Сольный стендап для вечера, где нужна плотная энергия и быстрый юмор.",
+        tags: ["стендап", "шоу"],
+        nrg: 2,
+        dep: 1,
+        growth: false,
+        kind: "standup",
+        url: "https://afisha.yandex.ru/kazan/concert/places/stand-up-club-kazan/schedule"
+      },
+      {
+        id: "bie-haibulla-01",
+        title: "Бие, бие, Хәйбулла",
+        place: "Театр им. Камала",
+        dateLabel: "1 октября",
+        time: "18:00",
+        price: 2000,
+        why: "Мастер-класс и национальный театр в одном маршруте для любопытного вечера.",
+        tags: ["мастер-класс", "театр", "культура"],
+        nrg: 1,
+        dep: 0,
+        growth: true,
+        kind: "masterclass",
+        url: "https://afisha.yandex.ru/kazan/selections/all-events-masterclass?marketing=weekly-cinema-click"
+      },
+      {
+        id: "sharyk-evening-01",
+        title: "Шәрык кичләре / Восточные вечера",
+        place: "Клуб Шарык",
+        dateLabel: "1 октября",
+        time: "19:00",
+        price: 200,
+        why: "Культурная встреча за небольшие деньги, если хочется нового без перегруза.",
+        tags: ["встреча", "культура", "до 500 ₽"],
+        nrg: 0,
+        dep: 1,
+        growth: true,
+        kind: "meeting",
+        url: "https://afisha.yandex.ru/kazan/selections/all-events-masterclass?marketing=weekly-cinema-click"
+      },
+      {
+        id: "standup-dark-02",
+        title: "Стендап в полной темноте",
+        place: "Взгляд в темноту",
+        dateLabel: "2 октября",
+        time: "20:00",
+        price: 1000,
+        why: "Непривычный формат: смешно, странно и точно не похоже на обычный зал.",
+        tags: ["стендап", "шоу", "необычно"],
+        nrg: 1,
+        dep: 2,
+        growth: false,
+        kind: "standup",
+        url: "https://afisha.yandex.ru/kazan/excursions/places/vzgliad-v-temnotu/schedule"
+      },
+      {
+        id: "standup-show-03",
+        title: "Stand-up Show. Лучшее",
+        place: "Stand Up Club Kazan",
+        day: "saturday",
+        time: "19:00",
+        price: 1000,
+        why: "Классический вечер стендапа, когда хочется проверенного юмора и компании.",
+        tags: ["стендап", "шоу"],
+        nrg: 2,
+        dep: 1,
+        growth: false,
+        kind: "standup",
+        url: "https://afisha.yandex.ru/kazan/concert/places/stand-up-club-kazan/schedule"
+      },
+      {
+        id: "top-standup-03",
+        title: "Tоп Стендап",
+        place: "Stand Up Club Kazan",
+        day: "saturday",
+        time: "21:30",
+        price: 1200,
+        why: "Поздний стендап для тех, кто хочет продлить вечер и не сидеть спокойно.",
+        tags: ["стендап", "юмор"],
+        nrg: 2,
+        dep: 1,
+        growth: false,
+        kind: "standup",
+        url: "https://afisha.yandex.ru/kazan/standup/top-stendap-kazan"
+      },
+      {
+        id: "arthur-shamgunov-03",
+        title: "Артур Шамгунов",
+        place: "КРК «Пирамида»",
+        day: "saturday",
+        time: "21:00",
+        price: 2000,
+        why: "Большой стендап-концерт, если хочется не танцевать, а громко смеяться.",
+        tags: ["стендап", "концерт"],
+        nrg: 2,
+        dep: 1,
+        growth: false,
+        kind: "standup",
+        url: "https://afisha.yandex.ru/kazan/show/oct"
+      },
+      {
+        id: "oil-autumn-11",
+        title: "Мастер-класс «Дыхание осени»",
+        place: "Галерея современного искусства",
+        dateLabel: "11 октября",
+        time: "13:00",
+        price: 1400,
+        why: "Спокойный арт-мастер-класс, чтобы замедлиться и унести результат с собой.",
+        tags: ["мастер-класс", "арт"],
+        nrg: 0,
+        dep: 0,
+        growth: true,
+        kind: "masterclass",
+        url: "https://afisha.yandex.ru/kazan/selections/all-events-masterclass?marketing=weekly-cinema-click"
+      },
+      {
+        id: "collage-zaicev",
+        title: "Стильный коллаж из цветной бумаги",
+        place: "Галерея Славы Зайцева",
+        dateLabel: "октябрь",
+        time: "18:00",
+        price: 3300,
+        why: "Творческий вечер для тех, кто хочет не просто смотреть, а сделать руками.",
+        tags: ["мастер-класс", "арт"],
+        nrg: 0,
+        dep: 1,
+        growth: true,
+        kind: "masterclass",
+        url: "https://afisha.yandex.ru/kazan/selections/all-events-masterclass?marketing=weekly-cinema-click"
+      },
+      {
+        id: "dirty-standup-oct",
+        title: "Грязный стендап. Лучшее",
+        place: "Стендап-клуб Comedy Crew",
+        dateLabel: "октябрь",
+        time: "21:00",
+        price: 800,
+        why: "Более резкий юмор для режима «выпустить пар», когда нужен прямой удар.",
+        tags: ["стендап", "18+"],
+        nrg: 2,
+        dep: 2,
+        growth: false,
+        kind: "standup",
+        url: "https://afisha.yandex.ru/kazan/standup/oct"
+      }
+    ];
+
+    const inferredSignals = {
+      charged: { nrg: 2, dep: 0, growth: false },
+      release: { nrg: 2, dep: 2, growth: false },
+      exhale: { nrg: 0, dep: 0, growth: false },
+      blue: { nrg: 0, dep: 2, growth: false },
+      learn: { nrg: 0, dep: 1, growth: true },
+      wild: { nrg: 1, dep: 1, growth: true }
+    };
+
+    const moodTargets = {
+      charged: { nrg: 2, dep: 0, growth: false, tags: ["концерт", "танцы", "шоу", "поп", "рэп"] },
+      release: { nrg: 2, dep: 2, growth: false, tags: ["стендап", "рок", "юмор", "шоу", "18+"] },
+      exhale: { nrg: 0, dep: 0, growth: false, tags: ["экскурсия", "город", "арт", "выставка", "кино"] },
+      blue: { nrg: 0, dep: 2, growth: false, tags: ["театр", "поэзия", "кино", "концерт", "музыка"] },
+      learn: { nrg: 0, dep: 1, growth: true, tags: ["мастер-класс", "культура", "экскурсия", "встреча", "арт"] },
+      wild: { nrg: 1, dep: 1, growth: true, tags: ["необычно", "иммерсивно", "шоу", "культура", "мастер-класс"] }
+    };
+
+    function enrichEvent(event) {
+      const firstMood = event.moods?.[0] || "wild";
+      const fallback = inferredSignals[firstMood] || inferredSignals.wild;
+      const tags = event.tags || [];
+      const kind = event.kind
+        || (tags.includes("стендап") ? "standup"
+        : tags.includes("театр") ? "theatre"
+        : tags.includes("мастер-класс") ? "masterclass"
+        : tags.includes("экскурсия") ? "tour"
+        : tags.includes("концерт") ? "concert"
+        : "other");
+      return {
+        ...event,
+        nrg: event.nrg ?? fallback.nrg,
+        dep: event.dep ?? fallback.dep,
+        growth: event.growth ?? fallback.growth,
+        kind
+      };
+    }
+
+    const allEvents = [...events, ...extraEvents].map(enrichEvent);
+
     const state = {
       screen: "mood",
       history: [],
       mood: moods[0],
       day: "today",
       budget: false,
-      event: events[0],
+      event: allEvents[0],
       inviteStep: 0
     };
 
@@ -992,6 +1230,7 @@
     }
 
     function whenLabel(event) {
+      if (event.dateLabel) return `${event.dateLabel}, ${event.time}`;
       return `${dayTitles[event.day]}, ${event.time}`;
     }
 
@@ -1016,29 +1255,64 @@
       return [...new Map(items.map((item) => [item.id, item])).values()];
     }
 
-    function pickEvents() {
-      if (state.mood.id === "wild") {
-        return [
-          events.find((event) => event.id === "kaleidoscope-29"),
-          events.find((event) => event.id === "placebo-mcr-03"),
-          events.find((event) => event.id === "night-kazan-28")
-        ].filter(Boolean);
-      }
+    function eventScore(event) {
+      const target = moodTargets[state.mood.id];
+      const tagMatches = event.tags.filter((tag) => target.tags.includes(tag)).length;
+      const moodMatch = event.moods?.includes(state.mood.id) ? 1 : 0;
+      const sameDay = event.day === state.day ? 1 : 0;
+      const anotherFixedDay = event.day && event.day !== state.day ? 1 : 0;
+      const isCheap = event.price <= 500 ? 1 : 0;
+      const isOkayBudget = event.price <= 1000 ? 1 : 0;
 
-      const moodMatches = events.filter((event) => event.moods.includes(state.mood.id));
-      const sameDay = moodMatches.filter((event) => event.day === state.day);
-      const otherDays = moodMatches.filter((event) => event.day !== state.day);
-      let picked = uniqueById([...sameDay, ...otherDays, ...events]);
+      let score = 120;
+      score -= Math.abs(event.nrg - target.nrg) * 26;
+      score -= Math.abs(event.dep - target.dep) * 24;
+      score += tagMatches * 13;
+      score += moodMatch * 22;
+      score += sameDay * 28;
+      score -= anotherFixedDay * 8;
+
+      if (target.growth) score += event.growth ? 30 : -12;
+      if (!target.growth && event.growth) score -= 4;
 
       if (state.budget) {
-        picked = picked.sort((a, b) => {
-          const aCheap = a.price <= 500 ? 0 : 1;
-          const bCheap = b.price <= 500 ? 0 : 1;
-          return aCheap - bCheap || a.price - b.price;
-        });
+        score += isCheap ? 32 : isOkayBudget ? 12 : -Math.min(28, event.price / 180);
+      } else {
+        score -= Math.min(12, event.price / 1600);
       }
 
-      return picked.slice(0, 3);
+      return score;
+    }
+
+    function pickEvents() {
+      const ranked = allEvents
+        .map((event) => ({ event, score: eventScore(event) }))
+        .sort((a, b) => b.score - a.score || a.event.price - b.event.price);
+
+      const selected = [];
+      const usedKinds = new Set();
+      const usedTitles = new Set();
+
+      for (const item of ranked) {
+        const normalizedTitle = item.event.title.toLowerCase();
+        if (usedTitles.has(normalizedTitle)) continue;
+        if (usedKinds.has(item.event.kind) && selected.length < 2) continue;
+        selected.push(item.event);
+        usedKinds.add(item.event.kind);
+        usedTitles.add(normalizedTitle);
+        if (selected.length === 3) return selected;
+      }
+
+      for (const item of ranked) {
+        const normalizedTitle = item.event.title.toLowerCase();
+        if (selected.some((event) => event.id === item.event.id)) continue;
+        if (usedTitles.has(normalizedTitle)) continue;
+        selected.push(item.event);
+        usedTitles.add(normalizedTitle);
+        if (selected.length === 3) return selected;
+      }
+
+      return selected;
     }
 
     function renderMoods() {
@@ -1158,7 +1432,7 @@
 
       const eventButton = event.target.closest("[data-event]");
       if (eventButton) {
-        state.event = events.find((item) => item.id === eventButton.dataset.event) || events[0];
+        state.event = allEvents.find((item) => item.id === eventButton.dataset.event) || allEvents[0];
         go("plan");
       }
     });
