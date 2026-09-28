@@ -257,6 +257,24 @@ h3 { font-size: 20px; line-height: 1.2; font-weight: 800; letter-spacing: -0.01e
 .facts div + div { border-top: 1px solid var(--line); }
 .facts dt { color: var(--muted); }
 .facts dd { margin: 0; font-weight: 600; text-align: right; }
+.ticket-demo {
+  margin: 0 0 12px;
+  padding: 14px 16px;
+  border: 1px dashed var(--line);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--surface) 82%, var(--surface-2));
+}
+.ticket-demo-title {
+  display: block;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+.ticket-demo-text {
+  display: block;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.4;
+}
 
 /* Экран 5: приглашение и живой счётчик */
 .sent-badge {
