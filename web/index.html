@@ -36,6 +36,25 @@
       font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
       font-size: 13px;
     }
+
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: #0b0b0f;
+      }
+
+      .file-fallback {
+        color: #f3f4f7;
+      }
+
+      .file-fallback p {
+        color: #a1a7b7;
+      }
+
+      .file-fallback code {
+        background: #24252d;
+        color: #f3f4f7;
+      }
+    }
   </style>
   <!-- MAX Bridge: объект window.WebApp — подпись, кнопка «Назад», открытие ссылок -->
   <script src="https://st.max.ru/js/max-web-app.js"></script>
@@ -43,7 +62,7 @@
 </head>
 <body>
   <main id="app" class="app">
-    <section class="file-fallback">
+    <section class="file-fallback" role="status" aria-live="polite">
       <h1>Запусти через сервер</h1>
       <p>Эта версия мини-приложения использует API и модульный JavaScript, поэтому при открытии файлом может не загрузиться.</p>
       <p>Команда: <code>python -m uvicorn server.main:app --reload --port 3000</code></p>
