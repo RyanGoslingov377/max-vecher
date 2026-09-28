@@ -1,0 +1,1459 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Вечер по настроению — прототип</title>
+  <style>
+    :root {
+      --bg: #f3f5f8;
+      --panel: #ffffff;
+      --panel-soft: #edf1f6;
+      --text: #10131a;
+      --muted: #627083;
+      --line: #dbe1ea;
+      --accent: #245fe8;
+      --accent-ink: #ffffff;
+      --mood: #245fe8;
+      --mood-ink: #ffffff;
+      --ok: #167447;
+      --warn: #9a5a00;
+      --radius: 8px;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      color-scheme: light;
+    }
+
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    body {
+      min-height: 100vh;
+      font-size: 16px;
+    }
+
+    button,
+    a {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      color: inherit;
+      cursor: pointer;
+    }
+
+    button:focus-visible,
+    a:focus-visible {
+      outline: 3px solid rgba(36, 95, 232, 0.32);
+      outline-offset: 2px;
+    }
+
+    .app {
+      width: min(100%, 960px);
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 18px 20px 34px;
+    }
+
+    .topbar {
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .icon-button {
+      width: 38px;
+      height: 38px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background: var(--panel-soft);
+    }
+
+    .topbar-title {
+      flex: 1;
+      font-size: 18px;
+      font-weight: 850;
+    }
+
+    .city-chip,
+    .tag,
+    .pill {
+      border-radius: 999px;
+      background: var(--panel-soft);
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .city-chip {
+      padding: 7px 12px;
+    }
+
+    .view {
+      display: none;
+      padding-top: 22px;
+    }
+
+    .view.is-active {
+      display: block;
+      animation: enter 160ms ease-out;
+    }
+
+    @keyframes enter {
+      from { opacity: 0; transform: translateY(5px); }
+    }
+
+    .hero,
+    .content-narrow {
+      width: min(100%, 720px);
+      margin: 0 auto;
+    }
+
+    .hero {
+      padding-top: clamp(10px, 5vh, 52px);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(30px, 4vw, 48px);
+      line-height: 1.04;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.2;
+    }
+
+    h3 {
+      margin: 0;
+      font-size: 21px;
+      line-height: 1.18;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0;
+      line-height: 1.45;
+    }
+
+    .lead {
+      max-width: 560px;
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 17px;
+    }
+
+    .mood-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 28px;
+    }
+
+    .mood-tile {
+      min-height: 154px;
+      padding: 16px;
+      border-radius: var(--radius);
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      text-align: left;
+      background: var(--tile);
+      color: var(--tile-ink);
+      box-shadow: 0 1px 0 rgba(15, 23, 42, 0.05);
+      transition: transform 120ms ease, box-shadow 120ms ease;
+    }
+
+    .mood-tile:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 32px rgba(15, 23, 42, 0.12);
+    }
+
+    .mood-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background: rgba(255, 255, 255, 0.2);
+      font-size: 24px;
+      font-weight: 900;
+    }
+
+    .mood-title {
+      margin-top: auto;
+      font-size: 19px;
+      font-weight: 900;
+      line-height: 1.08;
+    }
+
+    .mood-subtitle {
+      margin-top: 5px;
+      font-size: 14px;
+      opacity: 0.78;
+    }
+
+    .setup-band {
+      border-radius: var(--radius);
+      padding: 24px;
+      background: var(--mood);
+      color: var(--mood-ink);
+    }
+
+    .setup-band .lead {
+      color: color-mix(in srgb, var(--mood-ink) 76%, transparent);
+    }
+
+    .setup-icon {
+      width: 48px;
+      height: 48px;
+      margin-bottom: 14px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background: color-mix(in srgb, var(--mood-ink) 18%, transparent);
+      font-size: 27px;
+      font-weight: 900;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    .control-group {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      padding: 14px;
+    }
+
+    .control-title {
+      margin-bottom: 10px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 850;
+      text-transform: uppercase;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip {
+      min-height: 40px;
+      padding: 9px 14px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--panel);
+      color: var(--text);
+      font-weight: 800;
+    }
+
+    .chip.is-selected {
+      border-color: var(--mood);
+      background: var(--mood);
+      color: var(--mood-ink);
+    }
+
+    .switch-row {
+      width: 100%;
+      min-height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-radius: var(--radius);
+      background: transparent;
+      text-align: left;
+    }
+
+    .switch-title {
+      display: block;
+      font-weight: 850;
+    }
+
+    .switch-subtitle {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .switch {
+      width: 52px;
+      height: 30px;
+      flex: 0 0 auto;
+      padding: 3px;
+      border-radius: 999px;
+      background: #cbd3df;
+    }
+
+    .switch::before {
+      content: "";
+      display: block;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #ffffff;
+      transition: transform 160ms ease;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.22);
+    }
+
+    .switch.is-on {
+      background: var(--mood);
+    }
+
+    .switch.is-on::before {
+      transform: translateX(22px);
+    }
+
+    .actions {
+      width: min(100%, 720px);
+      margin: 18px auto 0;
+      display: flex;
+      gap: 10px;
+    }
+
+    .button,
+    .inline-button {
+      min-height: 48px;
+      border-radius: var(--radius);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--accent);
+      color: var(--accent-ink);
+      font-weight: 900;
+      text-decoration: none;
+    }
+
+    .button {
+      width: 100%;
+      padding: 0 18px;
+      font-size: 16px;
+    }
+
+    .button.secondary {
+      background: var(--panel);
+      color: var(--text);
+      border: 1px solid var(--line);
+    }
+
+    .result-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 18px;
+      margin: 0 auto 16px;
+      width: min(100%, 860px);
+    }
+
+    .result-head .lead {
+      margin-top: 7px;
+    }
+
+    .result-meta {
+      flex: 0 0 auto;
+      text-align: right;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .results-list {
+      width: min(100%, 860px);
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .event-card,
+    .detail-card,
+    .counter {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04);
+    }
+
+    .event-card {
+      min-height: 286px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .event-card.is-top {
+      background: var(--mood);
+      color: var(--mood-ink);
+      border-color: transparent;
+    }
+
+    .event-card.is-top .meta,
+    .event-card.is-top .place {
+      color: color-mix(in srgb, var(--mood-ink) 78%, transparent);
+    }
+
+    .card-label {
+      align-self: flex-start;
+      margin-bottom: 12px;
+      padding: 5px 8px;
+      border-radius: 999px;
+      background: color-mix(in srgb, currentColor 12%, transparent);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 850;
+    }
+
+    .place {
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 750;
+    }
+
+    .why {
+      margin-top: 12px;
+      font-size: 15px;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 14px;
+    }
+
+    .tag {
+      padding: 4px 8px;
+      font-size: 12px;
+    }
+
+    .tag.warn {
+      background: #fff6df;
+      color: var(--warn);
+    }
+
+    .event-bottom {
+      margin-top: auto;
+      padding-top: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .price {
+      font-size: 18px;
+      font-weight: 950;
+    }
+
+    .inline-button {
+      min-width: 98px;
+      min-height: 38px;
+      padding: 0 14px;
+      font-size: 14px;
+    }
+
+    .event-card.is-top .inline-button {
+      background: var(--mood-ink);
+      color: var(--mood);
+    }
+
+    .detail-layout {
+      width: min(100%, 760px);
+      margin: 0 auto;
+      display: grid;
+      gap: 12px;
+    }
+
+    .detail-card {
+      padding: 18px;
+    }
+
+    .facts {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .fact {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      padding: 14px;
+    }
+
+    .fact span {
+      display: block;
+    }
+
+    .fact span:first-child {
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 850;
+    }
+
+    .fact span:last-child {
+      font-weight: 850;
+    }
+
+    .invite-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .counter {
+      min-height: 112px;
+      padding: 14px;
+      text-align: center;
+    }
+
+    .counter strong {
+      display: block;
+      font-size: 30px;
+      line-height: 1;
+    }
+
+    .counter span {
+      display: block;
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 850;
+    }
+
+    .counter small {
+      display: block;
+      margin-top: 7px;
+      color: var(--muted);
+      overflow-wrap: anywhere;
+    }
+
+    .success-badge {
+      width: 58px;
+      height: 58px;
+      margin-bottom: 14px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background: #dff7e9;
+      color: var(--ok);
+      font-size: 31px;
+      font-weight: 950;
+    }
+
+    .live-row {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--ok);
+      box-shadow: 0 0 0 5px rgba(22, 116, 71, 0.12);
+    }
+
+    @media (max-width: 780px) {
+      .app {
+        padding: 10px 14px 24px;
+      }
+
+      .hero {
+        padding-top: 10px;
+      }
+
+      .mood-grid,
+      .controls,
+      .results-list,
+      .facts {
+        grid-template-columns: 1fr;
+      }
+
+      .mood-grid {
+        gap: 10px;
+      }
+
+      .mood-tile {
+        min-height: 124px;
+      }
+
+      .result-head {
+        display: block;
+      }
+
+      .result-meta {
+        margin-top: 10px;
+        text-align: left;
+      }
+
+      .event-card {
+        min-height: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <button id="backButton" class="icon-button" type="button" aria-label="Назад" hidden>
+        <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M19 12H5m6 6-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <div id="topTitle" class="topbar-title">Вечер</div>
+      <span class="city-chip">Казань</span>
+    </header>
+
+    <main>
+      <section id="moodView" class="view is-active" data-title="Вечер">
+        <div class="hero">
+          <h1>Какое у тебя настроение?</h1>
+          <p class="lead">Выбери состояние, день и бюджет. Прототип покажет три живых варианта без бесконечной афиши.</p>
+          <div id="moodGrid" class="mood-grid"></div>
+        </div>
+      </section>
+
+      <section id="setupView" class="view" data-title="Настройка">
+        <div class="content-narrow">
+          <div class="setup-band">
+            <div id="setupIcon" class="setup-icon"></div>
+            <h1 id="setupTitle"></h1>
+            <p id="setupLead" class="lead"></p>
+          </div>
+          <div class="controls">
+            <div class="control-group">
+              <div class="control-title">Когда</div>
+              <div class="chips" aria-label="День">
+                <button class="chip is-selected" type="button" data-day="today">Сегодня</button>
+                <button class="chip" type="button" data-day="tomorrow">Завтра</button>
+                <button class="chip" type="button" data-day="saturday">В субботу</button>
+              </div>
+            </div>
+            <div class="control-group">
+              <div class="control-title">Деньги</div>
+              <button id="budgetButton" class="switch-row" type="button" role="switch" aria-checked="false">
+                <span>
+                  <span class="switch-title">Бюджет поджимает</span>
+                  <span class="switch-subtitle">Сначала события до 500 ₽</span>
+                </span>
+                <span id="budgetSwitch" class="switch" aria-hidden="true"></span>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="actions">
+          <button id="showResultsButton" class="button" type="button">Показать 3 варианта</button>
+        </div>
+      </section>
+
+      <section id="resultsView" class="view" data-title="Три варианта">
+        <div class="result-head">
+          <div>
+            <h1 id="resultsTitle"></h1>
+            <p id="resultsLead" class="lead"></p>
+          </div>
+          <div id="resultMeta" class="result-meta"></div>
+        </div>
+        <div id="resultsList" class="results-list"></div>
+        <div class="actions">
+          <button id="anotherMoodButton" class="button secondary" type="button">Другое настроение</button>
+        </div>
+      </section>
+
+      <section id="planView" class="view" data-title="План">
+        <div class="detail-layout">
+          <article class="detail-card">
+            <span id="planWhen" class="meta"></span>
+            <h1 id="planTitle"></h1>
+            <p id="planWhy" class="lead"></p>
+          </article>
+          <div class="facts">
+            <div class="fact"><span>Где</span><span id="planPlace"></span></div>
+            <div class="fact"><span>Когда</span><span id="planTime"></span></div>
+            <div class="fact"><span>Цена</span><span id="planPrice"></span></div>
+          </div>
+          <div class="actions">
+            <a id="ticketButton" class="button secondary" href="#" target="_blank" rel="noreferrer">Открыть билеты</a>
+            <button id="inviteButton" class="button" type="button">Позвать чат</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="inviteView" class="view" data-title="Приглашение">
+        <div class="detail-layout">
+          <div class="detail-card">
+            <div class="success-badge">✓</div>
+            <h1>Позвали</h1>
+            <p class="lead">Карточка ушла в чат. В прототипе ответы друзей обновляются сами.</p>
+          </div>
+          <article class="detail-card">
+            <span id="inviteWhen" class="meta"></span>
+            <h3 id="inviteTitle"></h3>
+            <p id="invitePlace" class="place"></p>
+          </article>
+          <div class="invite-grid">
+            <div class="counter">
+              <strong id="goingCount">1</strong>
+              <span>Иду</span>
+              <small id="goingNames">Ты</small>
+            </div>
+            <div class="counter">
+              <strong id="maybeCount">0</strong>
+              <span>Может</span>
+              <small id="maybeNames">-</small>
+            </div>
+            <div class="counter">
+              <strong id="noCount">0</strong>
+              <span>Не могу</span>
+              <small id="noNames">-</small>
+            </div>
+          </div>
+          <div class="live-row"><span class="live-dot"></span>Обновляется само</div>
+          <div class="actions">
+            <button id="doneButton" class="button" type="button">Готово</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const moods = [
+      { id: "charged", title: "Заряжен(а)", hint: "Музыка, танцы, громкий вечер", icon: "↯", color: "#f2562d", ink: "#ffffff" },
+      { id: "release", title: "Выпустить пар", hint: "Рок, стендап, много энергии", icon: "!", color: "#f4bf3c", ink: "#221600" },
+      { id: "exhale", title: "Хочу выдохнуть", hint: "Прогулки, город, спокойный ритм", icon: "≈", color: "#a9dbc0", ink: "#0d281a" },
+      { id: "blue", title: "Погрустить красиво", hint: "Театр, музыка, сильные эмоции", icon: "♪", color: "#4264d8", ink: "#ffffff" },
+      { id: "learn", title: "Узнать новое", hint: "Культура, история, необычный формат", icon: "?", color: "#0e7d84", ink: "#ffffff" },
+      { id: "wild", title: "Удиви меня", hint: "Три разных идеи на вечер", icon: "*", color: "#6b4bf0", ink: "#ffffff" }
+    ];
+
+    const dayTitles = {
+      today: "Сегодня, 28 сентября",
+      tomorrow: "Завтра, 29 сентября",
+      saturday: "В субботу, 3 октября"
+    };
+
+    const events = [
+      {
+        id: "night-kazan-28",
+        title: "По ночной Казани с колесом обозрения",
+        place: "Экскурсия по ночной Казани",
+        day: "today",
+        time: "20:00",
+        price: 600,
+        why: "Неспешная прогулка и вид сверху, чтобы выдохнуть и заново увидеть город.",
+        tags: ["экскурсия", "город"],
+        moods: ["exhale", "learn", "wild"],
+        url: "https://afisha.yandex.ru/kazan/excursions/places/ekskursiia-po-nochnoi-kazani-s-kataniem-na-kolese-obozreniia-vokrug-sveta/schedule/september-2026"
+      },
+      {
+        id: "world-cinema-28",
+        title: "Музыка мирового кинематографа",
+        place: "Театр на Булаке",
+        day: "today",
+        time: "19:00",
+        price: 1500,
+        why: "Саундтреки знакомых фильмов в живом исполнении — мягко и атмосферно.",
+        tags: ["концерт", "кино"],
+        moods: ["blue", "exhale", "wild"],
+        url: "https://afisha.yandex.ru/kazan/concert/muzyka-mirovogo-kinematografa-2026"
+      },
+      {
+        id: "galiya-28",
+        title: "Галия",
+        place: "Театр им. Камала, новое здание",
+        day: "today",
+        time: "13:00",
+        price: 500,
+        why: "Театральный вариант для тихого, вдумчивого настроения.",
+        tags: ["театр", "до 500 ₽"],
+        moods: ["blue", "learn"],
+        url: "https://afisha.yandex.ru/kazan/theatre/places/teatr-im-kamala-novoe-zdanie/schedule/september-2026"
+      },
+      {
+        id: "rubalskaya-28",
+        title: "Лариса Рубальская. Юбилейный тур",
+        place: "Уникс",
+        day: "today",
+        time: "19:00",
+        price: 1500,
+        why: "Лиричный вечер со стихами и историями, когда хочется красиво погрустить.",
+        tags: ["концерт", "поэзия"],
+        moods: ["blue"],
+        url: "https://afisha.yandex.ru/kazan/concert/larisa-rubalskaia-iubileinyi-tour"
+      },
+      {
+        id: "ernest-29",
+        title: "С любовью, Эрнест",
+        place: "More",
+        day: "tomorrow",
+        time: "19:00",
+        price: 3220,
+        why: "Камерный иммерсивный театр, когда хочется красоты и близкой дистанции.",
+        tags: ["иммерсивно", "театр"],
+        moods: ["blue", "wild"],
+        url: "https://afisha.yandex.ru/kazan/other/places/more-kazan/schedule/september-2026"
+      },
+      {
+        id: "kamala-gergeri-29",
+        title: "Гөргөри кияүләре / Зятья Гэргэри",
+        place: "Театр им. Камала, новое здание",
+        day: "tomorrow",
+        time: "19:00",
+        price: 500,
+        why: "Комедийный спектакль без тяжелого входа, чтобы вечер стал легче.",
+        tags: ["театр", "комедия"],
+        moods: ["release", "exhale", "learn"],
+        url: "https://afisha.yandex.ru/kazan/theatre/places/teatr-im-kamala-novoe-zdanie/schedule/september-2026"
+      },
+      {
+        id: "kaleidoscope-29",
+        title: "Kaleidoscope. Туган як",
+        place: "Kaleidoscope",
+        day: "tomorrow",
+        time: "19:00",
+        price: 10000,
+        why: "Необычный формат про культуру и место, если хочется нового опыта.",
+        tags: ["иммерсивно", "культура"],
+        moods: ["learn", "wild"],
+        url: "https://afisha.yandex.ru/kazan/theatre/places/kaleidoscope/schedule/september-2026"
+      },
+      {
+        id: "night-kazan-29",
+        title: "По ночной Казани с колесом обозрения",
+        place: "Экскурсия по ночной Казани",
+        day: "tomorrow",
+        time: "20:00",
+        price: 600,
+        why: "Городская прогулка на вечер, когда хочется переключиться без толпы и драйва.",
+        tags: ["экскурсия", "город"],
+        moods: ["exhale", "learn"],
+        url: "https://afisha.yandex.ru/kazan/excursions/places/ekskursiia-po-nochnoi-kazani-s-kataniem-na-kolese-obozreniia-vokrug-sveta/schedule/september-2026"
+      },
+      {
+        id: "vorovayki-30",
+        title: "Воровайки",
+        place: "Максимилианс",
+        day: "tomorrow",
+        time: "20:00",
+        price: 1800,
+        why: "Громкий концерт для вечера, когда нужно сбросить напряжение и подпевать.",
+        tags: ["концерт", "шансон"],
+        moods: ["charged", "release"],
+        url: "https://afisha.yandex.ru/kazan/concert/vorovayki-2026"
+      },
+      {
+        id: "ds-crew-03",
+        title: "DS CREW",
+        place: "Казань Экспо",
+        day: "saturday",
+        time: "19:00",
+        price: 1800,
+        why: "Много движения и визуального драйва для настроения «заряжен».",
+        tags: ["танцы", "шоу"],
+        moods: ["charged", "wild"],
+        url: "https://afisha.yandex.ru/kazan/concert/oct-3"
+      },
+      {
+        id: "mia-boyka-03",
+        title: "Mia Boyka",
+        place: "КРК Пирамида",
+        day: "saturday",
+        time: "19:00",
+        price: 1250,
+        why: "Поп-концерт для легкого драйва, подпевания и вечернего заряда.",
+        tags: ["концерт", "поп"],
+        moods: ["charged"],
+        url: "https://afisha.yandex.ru/kazan/concert/oct-3"
+      },
+      {
+        id: "placebo-mcr-03",
+        title: "Placebo & MCR Tribute",
+        place: "Big Twin Arena",
+        day: "saturday",
+        time: "19:00",
+        price: 1400,
+        why: "Громкий рок-вечер, чтобы выпустить пар и прожить эмоции на максимум.",
+        tags: ["рок", "трибьют"],
+        moods: ["release", "charged"],
+        url: "https://afisha.yandex.ru/kazan/concert/oct-3"
+      },
+      {
+        id: "simple-music-03",
+        title: "Simple Music. Ханс Циммер",
+        place: "Дом Simple Music",
+        day: "saturday",
+        time: "18:00",
+        price: 1500,
+        why: "Киномузыка с размахом, когда хочется эмоций без лишней суеты.",
+        tags: ["концерт", "кино"],
+        moods: ["blue", "exhale"],
+        url: "https://afisha.yandex.ru/kazan/concert/simple-music-khans-tsimmer"
+      },
+      {
+        id: "kamala-apipa-03",
+        title: "Әпипә / Апипа",
+        place: "Театр им. Камала, новое здание",
+        day: "saturday",
+        time: "15:00",
+        price: 300,
+        why: "Дневной театр на легкой энергии, чтобы не перегружать вечер.",
+        tags: ["театр", "до 500 ₽"],
+        moods: ["exhale", "learn"],
+        url: "https://afisha.yandex.ru/kazan/theatre/places/teatr-im-kamala-novoe-zdanie/schedule/october-2026"
+      },
+      {
+        id: "kariev-life-03",
+        title: "Гомер моңы / Мелодия жизни",
+        place: "ТЮЗ им. Кариева",
+        day: "saturday",
+        time: "17:00",
+        price: 450,
+        why: "Тихий театральный вариант, если хочется душевного вечера.",
+        tags: ["театр", "до 500 ₽"],
+        moods: ["blue", "learn"],
+        url: "https://afisha.yandex.ru/kazan/theatre/places/tiuz-im-karieva/schedule/october-2026"
+      },
+      {
+        id: "chestny-03",
+        title: "Честный",
+        place: "Korston",
+        day: "saturday",
+        time: "20:00",
+        price: 2400,
+        why: "Плотный вечерний концерт для тех, кому нужно больше энергии и прямого текста.",
+        tags: ["концерт", "рэп"],
+        moods: ["charged", "release"],
+        url: "https://afisha.yandex.ru/kazan/concert/oct-3"
+      }
+    ];
+
+    const extraEvents = [
+      {
+        id: "big-mic-28",
+        title: "Большой микрофон Comedy Crew",
+        place: "Стендап-клуб Comedy Crew",
+        day: "today",
+        time: "20:00",
+        price: 400,
+        why: "Недорогой стендап на вечер, когда хочется смеяться и сбросить лишнее.",
+        tags: ["стендап", "юмор", "до 500 ₽"],
+        nrg: 2,
+        dep: 1,
+        growth: false,
+        kind: "standup",
+        url: "https://afisha.yandex.ru/kazan/standup/oct"
+      },
+      {
+        id: "big-mic-29",
+        title: "Большой микрофон Comedy Crew",
+        place: "Стендап-клуб Comedy Crew",
+        day: "tomorrow",
+        time: "20:00",
+        price: 400,
+        why: "Живой микрофон с короткими сетами — быстро, шумно и без театральной паузы.",
+        tags: ["стендап", "юмор", "до 500 ₽"],
+        nrg: 2,
+        dep: 1,
+        growth: false,
+        kind: "standup",
+        url: "https://afisha.yandex.ru/kazan/standup/oct"
+      },
+      {
+        id: "chak-chak-29",
+        title: "Мастер-класс по приготовлению чак-чака",
+        place: "Тайны Сююмбике",
+        day: "tomorrow",
+        time: "14:00",
+        price: 1200,
+        why: "Руки заняты, голова отдыхает, а домой можно уйти с новым навыком.",
+        tags: ["мастер-класс", "еда", "культура"],
+        nrg: 1,
+        dep: 0,
+        growth: true,
+        kind: "masterclass",
+        url: "https://afisha.yandex.ru/kazan/selections/all-events-masterclass?marketing=weekly-cinema-click"
+      },
+      {
+        id: "andrey-atlas-01",
+        title: "Андрей Атлас",
+        place: "Stand Up Club Kazan",
+        dateLabel: "1 октября",
+        time: "21:30",
+        price: 2000,
+        why: "Сольный стендап для вечера, где нужна плотная энергия и быстрый юмор.",
+        tags: ["стендап", "шоу"],
+        nrg: 2,
+        dep: 1,
+        growth: false,
+        kind: "standup",
+        url: "https://afisha.yandex.ru/kazan/concert/places/stand-up-club-kazan/schedule"
+      },
+      {
+        id: "bie-haibulla-01",
+        title: "Бие, бие, Хәйбулла",
+        place: "Театр им. Камала",
+        dateLabel: "1 октября",
+        time: "18:00",
+        price: 2000,
+        why: "Мастер-класс и национальный театр в одном маршруте для любопытного вечера.",
+        tags: ["мастер-класс", "театр", "культура"],
+        nrg: 1,
+        dep: 0,
+        growth: true,
+        kind: "masterclass",
+        url: "https://afisha.yandex.ru/kazan/selections/all-events-masterclass?marketing=weekly-cinema-click"
+      },
+      {
+        id: "sharyk-evening-01",
+        title: "Шәрык кичләре / Восточные вечера",
+        place: "Клуб Шарык",
+        dateLabel: "1 октября",
+        time: "19:00",
+        price: 200,
+        why: "Культурная встреча за небольшие деньги, если хочется нового без перегруза.",
+        tags: ["встреча", "культура", "до 500 ₽"],
+        nrg: 0,
+        dep: 1,
+        growth: true,
+        kind: "meeting",
+        url: "https://afisha.yandex.ru/kazan/selections/all-events-masterclass?marketing=weekly-cinema-click"
+      },
+      {
+        id: "standup-dark-02",
+        title: "Стендап в полной темноте",
+        place: "Взгляд в темноту",
+        dateLabel: "2 октября",
+        time: "20:00",
+        price: 1000,
+        why: "Непривычный формат: смешно, странно и точно не похоже на обычный зал.",
+        tags: ["стендап", "шоу", "необычно"],
+        nrg: 1,
+        dep: 2,
+        growth: false,
+        kind: "standup",
+        url: "https://afisha.yandex.ru/kazan/excursions/places/vzgliad-v-temnotu/schedule"
+      },
+      {
+        id: "standup-show-03",
+        title: "Stand-up Show. Лучшее",
+        place: "Stand Up Club Kazan",
+        day: "saturday",
+        time: "19:00",
+        price: 1000,
+        why: "Классический вечер стендапа, когда хочется проверенного юмора и компании.",
+        tags: ["стендап", "шоу"],
+        nrg: 2,
+        dep: 1,
+        growth: false,
+        kind: "standup",
+        url: "https://afisha.yandex.ru/kazan/concert/places/stand-up-club-kazan/schedule"
+      },
+      {
+        id: "top-standup-03",
+        title: "Tоп Стендап",
+        place: "Stand Up Club Kazan",
+        day: "saturday",
+        time: "21:30",
+        price: 1200,
+        why: "Поздний стендап для тех, кто хочет продлить вечер и не сидеть спокойно.",
+        tags: ["стендап", "юмор"],
+        nrg: 2,
+        dep: 1,
+        growth: false,
+        kind: "standup",
+        url: "https://afisha.yandex.ru/kazan/standup/top-stendap-kazan"
+      },
+      {
+        id: "arthur-shamgunov-03",
+        title: "Артур Шамгунов",
+        place: "КРК «Пирамида»",
+        day: "saturday",
+        time: "21:00",
+        price: 2000,
+        why: "Большой стендап-концерт, если хочется не танцевать, а громко смеяться.",
+        tags: ["стендап", "концерт"],
+        nrg: 2,
+        dep: 1,
+        growth: false,
+        kind: "standup",
+        url: "https://afisha.yandex.ru/kazan/show/oct"
+      },
+      {
+        id: "oil-autumn-11",
+        title: "Мастер-класс «Дыхание осени»",
+        place: "Галерея современного искусства",
+        dateLabel: "11 октября",
+        time: "13:00",
+        price: 1400,
+        why: "Спокойный арт-мастер-класс, чтобы замедлиться и унести результат с собой.",
+        tags: ["мастер-класс", "арт"],
+        nrg: 0,
+        dep: 0,
+        growth: true,
+        kind: "masterclass",
+        url: "https://afisha.yandex.ru/kazan/selections/all-events-masterclass?marketing=weekly-cinema-click"
+      },
+      {
+        id: "collage-zaicev",
+        title: "Стильный коллаж из цветной бумаги",
+        place: "Галерея Славы Зайцева",
+        dateLabel: "октябрь",
+        time: "18:00",
+        price: 3300,
+        why: "Творческий вечер для тех, кто хочет не просто смотреть, а сделать руками.",
+        tags: ["мастер-класс", "арт"],
+        nrg: 0,
+        dep: 1,
+        growth: true,
+        kind: "masterclass",
+        url: "https://afisha.yandex.ru/kazan/selections/all-events-masterclass?marketing=weekly-cinema-click"
+      },
+      {
+        id: "dirty-standup-oct",
+        title: "Грязный стендап. Лучшее",
+        place: "Стендап-клуб Comedy Crew",
+        dateLabel: "октябрь",
+        time: "21:00",
+        price: 800,
+        why: "Более резкий юмор для режима «выпустить пар», когда нужен прямой удар.",
+        tags: ["стендап", "18+"],
+        nrg: 2,
+        dep: 2,
+        growth: false,
+        kind: "standup",
+        url: "https://afisha.yandex.ru/kazan/standup/oct"
+      }
+    ];
+
+    const inferredSignals = {
+      charged: { nrg: 2, dep: 0, growth: false },
+      release: { nrg: 2, dep: 2, growth: false },
+      exhale: { nrg: 0, dep: 0, growth: false },
+      blue: { nrg: 0, dep: 2, growth: false },
+      learn: { nrg: 0, dep: 1, growth: true },
+      wild: { nrg: 1, dep: 1, growth: true }
+    };
+
+    const moodTargets = {
+      charged: { nrg: 2, dep: 0, growth: false, tags: ["концерт", "танцы", "шоу", "поп", "рэп"] },
+      release: { nrg: 2, dep: 2, growth: false, tags: ["стендап", "рок", "юмор", "шоу", "18+"] },
+      exhale: { nrg: 0, dep: 0, growth: false, tags: ["экскурсия", "город", "арт", "выставка", "кино"] },
+      blue: { nrg: 0, dep: 2, growth: false, tags: ["театр", "поэзия", "кино", "концерт", "музыка"] },
+      learn: { nrg: 0, dep: 1, growth: true, tags: ["мастер-класс", "культура", "экскурсия", "встреча", "арт"] },
+      wild: { nrg: 1, dep: 1, growth: true, tags: ["необычно", "иммерсивно", "шоу", "культура", "мастер-класс"] }
+    };
+
+    function enrichEvent(event) {
+      const firstMood = event.moods?.[0] || "wild";
+      const fallback = inferredSignals[firstMood] || inferredSignals.wild;
+      const tags = event.tags || [];
+      const kind = event.kind
+        || (tags.includes("стендап") ? "standup"
+        : tags.includes("театр") ? "theatre"
+        : tags.includes("мастер-класс") ? "masterclass"
+        : tags.includes("экскурсия") ? "tour"
+        : tags.includes("концерт") ? "concert"
+        : "other");
+      return {
+        ...event,
+        nrg: event.nrg ?? fallback.nrg,
+        dep: event.dep ?? fallback.dep,
+        growth: event.growth ?? fallback.growth,
+        kind
+      };
+    }
+
+    const allEvents = [...events, ...extraEvents].map(enrichEvent);
+
+    const state = {
+      screen: "mood",
+      history: [],
+      mood: moods[0],
+      day: "today",
+      budget: false,
+      event: allEvents[0],
+      inviteStep: 0
+    };
+
+    const backButton = document.getElementById("backButton");
+    const topTitle = document.getElementById("topTitle");
+    const moodGrid = document.getElementById("moodGrid");
+    const budgetButton = document.getElementById("budgetButton");
+    const budgetSwitch = document.getElementById("budgetSwitch");
+
+    function moodById(id) {
+      return moods.find((mood) => mood.id === id) || moods[0];
+    }
+
+    function setMoodVars(mood) {
+      document.documentElement.style.setProperty("--mood", mood.color);
+      document.documentElement.style.setProperty("--mood-ink", mood.ink);
+    }
+
+    function priceLabel(price) {
+      return price ? `${price.toLocaleString("ru-RU")} ₽` : "Бесплатно";
+    }
+
+    function whenLabel(event) {
+      if (event.dateLabel) return `${event.dateLabel}, ${event.time}`;
+      return `${dayTitles[event.day]}, ${event.time}`;
+    }
+
+    function go(screen) {
+      if (state.screen !== screen) state.history.push(state.screen);
+      state.screen = screen;
+      render();
+    }
+
+    function resetToMood() {
+      state.history = [];
+      state.screen = "mood";
+      render();
+    }
+
+    function back() {
+      state.screen = state.history.pop() || "mood";
+      render();
+    }
+
+    function uniqueById(items) {
+      return [...new Map(items.map((item) => [item.id, item])).values()];
+    }
+
+    function eventScore(event) {
+      const target = moodTargets[state.mood.id];
+      const tagMatches = event.tags.filter((tag) => target.tags.includes(tag)).length;
+      const moodMatch = event.moods?.includes(state.mood.id) ? 1 : 0;
+      const sameDay = event.day === state.day ? 1 : 0;
+      const anotherFixedDay = event.day && event.day !== state.day ? 1 : 0;
+      const isCheap = event.price <= 500 ? 1 : 0;
+      const isOkayBudget = event.price <= 1000 ? 1 : 0;
+
+      let score = 120;
+      score -= Math.abs(event.nrg - target.nrg) * 26;
+      score -= Math.abs(event.dep - target.dep) * 24;
+      score += tagMatches * 13;
+      score += moodMatch * 22;
+      score += sameDay * 28;
+      score -= anotherFixedDay * 8;
+
+      if (target.growth) score += event.growth ? 30 : -12;
+      if (!target.growth && event.growth) score -= 4;
+
+      if (state.budget) {
+        score += isCheap ? 32 : isOkayBudget ? 12 : -Math.min(28, event.price / 180);
+      } else {
+        score -= Math.min(12, event.price / 1600);
+      }
+
+      return score;
+    }
+
+    function pickEvents() {
+      const ranked = allEvents
+        .map((event) => ({ event, score: eventScore(event) }))
+        .sort((a, b) => b.score - a.score || a.event.price - b.event.price);
+
+      const selected = [];
+      const usedKinds = new Set();
+      const usedTitles = new Set();
+
+      for (const item of ranked) {
+        const normalizedTitle = item.event.title.toLowerCase();
+        if (usedTitles.has(normalizedTitle)) continue;
+        if (usedKinds.has(item.event.kind) && selected.length < 2) continue;
+        selected.push(item.event);
+        usedKinds.add(item.event.kind);
+        usedTitles.add(normalizedTitle);
+        if (selected.length === 3) return selected;
+      }
+
+      for (const item of ranked) {
+        const normalizedTitle = item.event.title.toLowerCase();
+        if (selected.some((event) => event.id === item.event.id)) continue;
+        if (usedTitles.has(normalizedTitle)) continue;
+        selected.push(item.event);
+        usedTitles.add(normalizedTitle);
+        if (selected.length === 3) return selected;
+      }
+
+      return selected;
+    }
+
+    function renderMoods() {
+      moodGrid.innerHTML = moods.map((mood) => `
+        <button class="mood-tile" type="button" data-mood="${mood.id}" style="--tile:${mood.color};--tile-ink:${mood.ink}">
+          <span class="mood-icon">${mood.icon}</span>
+          <span class="mood-title">${mood.title}</span>
+          <span class="mood-subtitle">${mood.hint}</span>
+        </button>
+      `).join("");
+    }
+
+    function renderSetup() {
+      document.getElementById("setupIcon").textContent = state.mood.icon;
+      document.getElementById("setupTitle").textContent = state.mood.title;
+      document.getElementById("setupLead").textContent = state.mood.hint;
+      document.querySelectorAll("[data-day]").forEach((button) => {
+        button.classList.toggle("is-selected", button.dataset.day === state.day);
+      });
+      budgetButton.setAttribute("aria-checked", String(state.budget));
+      budgetSwitch.classList.toggle("is-on", state.budget);
+    }
+
+    function eventCard(event, index) {
+      const tags = event.tags.map((tag) => `<span class="tag ${event.price > 500 && state.budget ? "warn" : ""}">${tag}</span>`).join("");
+      return `
+        <article class="event-card ${index === 0 ? "is-top" : ""}">
+          ${index === 0 ? '<span class="card-label">Мы бы пошли сюда</span>' : ""}
+          <span class="meta">${whenLabel(event)}</span>
+          <h3>${event.title}</h3>
+          <p class="place">${event.place}</p>
+          <p class="why">${event.why}</p>
+          <div class="tags">${tags}</div>
+          <div class="event-bottom">
+            <span class="price">${priceLabel(event.price)}</span>
+            <button class="inline-button" type="button" data-event="${event.id}">Выбрать</button>
+          </div>
+        </article>
+      `;
+    }
+
+    function renderResults() {
+      const picked = pickEvents();
+      document.getElementById("resultsTitle").textContent = `${state.mood.icon} ${state.mood.title}`;
+      document.getElementById("resultsLead").textContent = state.budget
+        ? "Сначала недорогие варианты. Если идеальных дешевых нет, добавляем лучший запасной."
+        : "Три варианта вместо бесконечной афиши.";
+      document.getElementById("resultMeta").textContent = `${dayTitles[state.day]} · ${state.budget ? "до 500 ₽ в приоритете" : "без лимита"}`;
+      document.getElementById("resultsList").innerHTML = picked.map(eventCard).join("");
+    }
+
+    function renderPlan() {
+      document.getElementById("planWhen").textContent = whenLabel(state.event);
+      document.getElementById("planTitle").textContent = state.event.title;
+      document.getElementById("planWhy").textContent = state.event.why;
+      document.getElementById("planPlace").textContent = state.event.place;
+      document.getElementById("planTime").textContent = whenLabel(state.event);
+      document.getElementById("planPrice").textContent = priceLabel(state.event.price);
+      document.getElementById("ticketButton").href = state.event.url;
+    }
+
+    function renderInvite() {
+      const steps = [
+        { going: ["Ты"], maybe: [], no: [] },
+        { going: ["Ты", "Аня"], maybe: ["Илья"], no: [] },
+        { going: ["Ты", "Аня", "Данил"], maybe: ["Илья"], no: ["Маша"] }
+      ];
+      const answers = steps[state.inviteStep % steps.length];
+      state.inviteStep += 1;
+
+      document.getElementById("inviteWhen").textContent = whenLabel(state.event);
+      document.getElementById("inviteTitle").textContent = state.event.title;
+      document.getElementById("invitePlace").textContent = state.event.place;
+      document.getElementById("goingCount").textContent = answers.going.length;
+      document.getElementById("maybeCount").textContent = answers.maybe.length;
+      document.getElementById("noCount").textContent = answers.no.length;
+      document.getElementById("goingNames").textContent = answers.going.join(", ") || "-";
+      document.getElementById("maybeNames").textContent = answers.maybe.join(", ") || "-";
+      document.getElementById("noNames").textContent = answers.no.join(", ") || "-";
+    }
+
+    function renderChrome() {
+      const view = document.getElementById(`${state.screen}View`);
+      topTitle.textContent = view.dataset.title;
+      backButton.hidden = state.history.length === 0;
+    }
+
+    function render() {
+      setMoodVars(state.mood);
+      document.querySelectorAll(".view").forEach((view) => {
+        view.classList.toggle("is-active", view.id === `${state.screen}View`);
+      });
+      renderSetup();
+      renderResults();
+      renderPlan();
+      if (state.screen === "invite") renderInvite();
+      renderChrome();
+    }
+
+    renderMoods();
+    render();
+
+    document.addEventListener("click", (event) => {
+      const moodButton = event.target.closest("[data-mood]");
+      if (moodButton) {
+        state.mood = moodById(moodButton.dataset.mood);
+        go("setup");
+        return;
+      }
+
+      const dayButton = event.target.closest("[data-day]");
+      if (dayButton) {
+        state.day = dayButton.dataset.day;
+        render();
+        return;
+      }
+
+      const eventButton = event.target.closest("[data-event]");
+      if (eventButton) {
+        state.event = allEvents.find((item) => item.id === eventButton.dataset.event) || allEvents[0];
+        go("plan");
+      }
+    });
+
+    budgetButton.addEventListener("click", () => {
+      state.budget = !state.budget;
+      render();
+    });
+
+    backButton.addEventListener("click", back);
+    document.getElementById("showResultsButton").addEventListener("click", () => go("results"));
+    document.getElementById("anotherMoodButton").addEventListener("click", resetToMood);
+    document.getElementById("inviteButton").addEventListener("click", () => {
+      state.inviteStep = 0;
+      go("invite");
+    });
+    document.getElementById("doneButton").addEventListener("click", resetToMood);
+
+    setInterval(() => {
+      if (state.screen === "invite") renderInvite();
+    }, 2600);
+  </script>
+</body>
+</html>
