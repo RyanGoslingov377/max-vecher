@@ -6,7 +6,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 BOT_TOKEN = os.environ.get("MAX_BOT_TOKEN", "").strip()
-PUBLIC_URL = os.environ.get("PUBLIC_URL", "").strip()
 PORT = int(os.environ.get("PORT", "3000"))
 
 # 0 — сервер без бота: локальная разработка, чтобы не перехватывать события у бота на хостинге

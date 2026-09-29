@@ -16,7 +16,8 @@ log = logging.getLogger("bot")
 
 HELP_TEXT = (
     "Привет! Я помогаю выбрать вечер по настроению и позвать друзей.\n\n"
-    "/вечер — подобрать вечер: откроется мини-приложение\n"
+    "Нажмите «Подобрать вечер» — откроется мини-приложение.\n"
+    "/вечер — прислать эту кнопку ещё раз\n"
     "/help — эта подсказка\n\n"
     "В групповом чате сделайте меня администратором, иначе я не увижу команды."
 )
@@ -75,7 +76,7 @@ async def handle_update(api: MaxApi, update: dict) -> None:
         log.info("Сообщение в чате %s", chat_id)  # отсюда берут DEV_CHAT_ID для локальной проверки
         text = (message.get("body", {}).get("text") or "").strip().lower()
         if text.startswith(("/start", "/help")):
-            await api.send_message(chat_id, HELP_TEXT)
+            await send_open_app(api, chat_id, HELP_TEXT)  # подсказка сразу с кнопкой — не надо набирать /вечер
         elif text.startswith(("/вечер", "/vecher")):
             await send_open_app(api, chat_id)
         elif text.startswith("/тест"):
@@ -83,7 +84,7 @@ async def handle_update(api: MaxApi, update: dict) -> None:
 
     elif kind in ("bot_started", "bot_added"):
         # bot_started — нажали «Начать» в личке, bot_added — бота добавили в группу
-        await api.send_message(update["chat_id"], HELP_TEXT)
+        await send_open_app(api, update["chat_id"], HELP_TEXT)
 
     elif kind == "message_callback":
         callback = update["callback"]
@@ -93,17 +94,17 @@ async def handle_update(api: MaxApi, update: dict) -> None:
             await on_vote(api, callback)
 
 
-async def send_open_app(api: MaxApi, chat_id: int) -> None:
+async def send_open_app(api: MaxApi, chat_id: int, text: str = EVENING_TEXT) -> None:
     """Кнопка, которая открывает мини-приложение. В payload — чат, куда потом слать приглашения."""
     payload = f"chat{chat_id}"
     button = open_app_button("Подобрать вечер", status["username"], status["user_id"], payload)
     try:
-        await api.send_message(chat_id, EVENING_TEXT, [[button]])
+        await api.send_message(chat_id, text, [[button]])
     except httpx.HTTPStatusError as error:
         # Запасной путь: обычная ссылка-диплинк тоже открывает мини-приложение с тем же payload
         log.warning("МАКС не принял кнопку open_app (%s), шлю ссылку", error.response.status_code)
         link = f"https://max.ru/{status['username']}?startapp={payload}"
-        await api.send_message(chat_id, EVENING_TEXT, [[link_button("Подобрать вечер", link)]])
+        await api.send_message(chat_id, text, [[link_button("Подобрать вечер", link)]])
 
 
 async def send_test_card(api: MaxApi, chat_id: int) -> None:
