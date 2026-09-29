@@ -17,11 +17,6 @@ const MOODS = [
 ];
 const moodById = (id) => MOODS.find((mood) => mood.id === id);
 
-const DAYS = [
-  { id: "today", title: "Сегодня" },
-  { id: "tomorrow", title: "Завтра" },
-  { id: "saturday", title: "В субботу" },
-];
 const BUDGET_MAX = 300; // как в server/picker.py
 const ANSWERS = [
   { id: "going", title: "Иду" },
@@ -30,12 +25,37 @@ const ANSWERS = [
 ];
 const POLL_MS = 4000; // как часто обновлять счётчик ответов
 const TZ = "Europe/Moscow"; // Казань живёт по московскому времени
+const DAY_MS = 864e5;
+
+const dayKey = (date) => date.toLocaleDateString("en-CA", { timeZone: TZ }); // 2026-09-26
+
+function weekDays() {
+  const now = new Date();
+  return Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(now.getTime() + index * DAY_MS);
+    const title = index === 0
+      ? "Сегодня"
+      : index === 1
+        ? "Завтра"
+        : date.toLocaleDateString("ru-RU", { weekday: "short", timeZone: TZ });
+    return {
+      id: dayKey(date),
+      title,
+      date: date.toLocaleDateString("ru-RU", { day: "numeric", month: "short", timeZone: TZ }).replace(".", ""),
+    };
+  });
+}
+
+function dayTitle(id) {
+  const day = weekDays().find((item) => item.id === id);
+  return day ? `${day.title}, ${day.date}` : id;
+}
 
 const state = {
   screen: "mood", // mood → setup → results → plan → invite
   history: [], // откуда пришли — для кнопки «Назад»
   mood: null,
-  day: "today",
+  day: dayKey(new Date()),
   budget: false,
   loading: false,
   error: null,
@@ -185,8 +205,6 @@ function esc(value) {
   return String(value ?? "").replace(/[&<>"']/g, (ch) => `&#${ch.charCodeAt(0)};`);
 }
 
-const dayKey = (date) => date.toLocaleDateString("en-CA", { timeZone: TZ }); // 2026-09-26
-
 function whenLabel(event) {
   if (!event.starts_at) return "В любое время";
   const start = new Date(event.starts_at);
@@ -249,10 +267,11 @@ function moodScreen() {
 
 function setupScreen() {
   const mood = moodById(state.mood);
-  const days = DAYS.map(
+  const days = weekDays().map(
     (day) => `
-      <button class="chip ${state.day === day.id ? "is-on" : ""}" data-action="day" data-id="${day.id}">
-        ${day.title}
+      <button class="chip day-chip ${state.day === day.id ? "is-on" : ""}" data-action="day" data-id="${day.id}">
+        <span class="day-title">${day.title}</span>
+        <span class="day-date">${day.date}</span>
       </button>`
   ).join("");
   return `
@@ -264,7 +283,7 @@ function setupScreen() {
           <h1>${mood.title}</h1>
         </div>
         <h2>Когда?</h2>
-        <div class="chips">${days}</div>
+        <div class="chips day-strip">${days}</div>
         <h2>Деньги</h2>
         <button class="switch-row" data-action="budget" role="switch" aria-checked="${state.budget}">
           <span>
@@ -327,7 +346,7 @@ function resultsScreen() {
     ${header()}
     <section class="screen" style="--mood:${mood.color};--ink:${mood.ink}">
       <h1>${mood.emoji} ${mood.title}</h1>
-      <p class="lead">${DAYS.find((d) => d.id === state.day).title}${state.budget ? ` · до ${BUDGET_MAX} ₽` : ""}</p>
+      <p class="lead">${dayTitle(state.day)}${state.budget ? ` · до ${BUDGET_MAX} ₽` : ""}</p>
       ${body}
     </section>
     <div class="bar">

@@ -41,10 +41,10 @@ endpoints:
     auth: нет
     params:
       mood: charged | release | exhale | blue | learn | wild
-      day: today | tomorrow | saturday
+      day: YYYY-MM-DD ближайшей недели; старые алиасы today | tomorrow | saturday тоже поддержаны
       budget: 0 | 1   # 1 — сначала события до 300 ₽
     description: До трёх событий под настроение на выбранный день, лучшее — первое.
-    example: curl "https://max-vecher-gosuslugov233.amvera.io/api/pick?mood=charged&day=saturday&budget=1"
+    example: curl "https://max-vecher-gosuslugov233.amvera.io/api/pick?mood=charged&day=2026-10-05&budget=1"
 
   - method: GET
     path: /api/me

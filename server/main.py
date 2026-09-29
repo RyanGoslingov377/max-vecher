@@ -21,7 +21,7 @@ from .bot import run_bot, send_invite, status as bot_status
 from .events import find_event, load_events
 from .followup import run_followups
 from .max_api import MaxApi
-from .picker import DAYS, KAZAN_TZ, MOODS, WILD, pick, resolve_day
+from .picker import KAZAN_TZ, MOODS, WILD, pick, resolve_day
 from .schemas import HealthOut, InviteCreated, InviteIn, InviteOut, MeOut, PickOut, StatsOut
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s: %(message)s")
@@ -86,13 +86,14 @@ async def health():
 @app.get("/api/pick", response_model=PickOut, response_model_exclude_none=True, tags=["подбор"],
          responses={400: {"description": "Неизвестное настроение или день"}})
 async def api_pick(mood: str, day: str = "today", budget: bool = False):
-    """Три события под настроение. Пример: /api/pick?mood=charged&day=saturday&budget=1"""
+    """Три события под настроение. Пример: /api/pick?mood=charged&day=2026-10-05&budget=1"""
     if mood not in MOODS and mood != WILD:
         raise HTTPException(400, f"Неизвестное настроение. Можно: {', '.join([*MOODS, WILD])}")
-    if day not in DAYS:
-        raise HTTPException(400, f"Неизвестный день. Можно: {', '.join(DAYS)}")
     now = datetime.now(KAZAN_TZ)
-    target_day = resolve_day(day, now)
+    try:
+        target_day = resolve_day(day, now)
+    except ValueError as error:
+        raise HTTPException(400, str(error)) from None
     results = pick(load_events(), mood, target_day, budget_on=budget, now=now)
     return {"mood": mood, "day": target_day.isoformat(), "budget": budget, "results": results}
 

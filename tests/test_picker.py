@@ -86,6 +86,9 @@ def test_resolve_day():
     assert resolve_day("tomorrow", wednesday) == date(2026, 9, 24)
     assert resolve_day("saturday", wednesday) == date(2026, 9, 26)
     assert resolve_day("saturday", NOW) == SATURDAY  # в субботу «суббота» — это сегодня
+    assert resolve_day("2026-09-29", wednesday) == date(2026, 9, 29)
+    with pytest.raises(ValueError):
+        resolve_day("2026-10-01", wednesday)
 
 
 QUIZ = {"id": "quiz", "title": "Квиз", "place": "-", "price": 300, "tags": ["игры"], "nrg": 2, "dep": 0,

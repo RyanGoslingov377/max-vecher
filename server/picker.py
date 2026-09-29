@@ -46,7 +46,13 @@ def resolve_day(day: str, now: datetime) -> date:
         return today + timedelta(days=1)
     if day == "saturday":
         return today + timedelta(days=(5 - today.weekday()) % 7)
-    raise ValueError(f"Неизвестный день: {day}")
+    try:
+        target = date.fromisoformat(day)
+    except ValueError:
+        raise ValueError(f"Неизвестный день: {day}") from None
+    if target < today or target > today + timedelta(days=6):
+        raise ValueError("Дата должна быть в ближайшие 7 дней")
+    return target
 
 
 def starts_at(event: dict) -> datetime | None:

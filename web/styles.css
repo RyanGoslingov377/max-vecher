@@ -209,6 +209,14 @@ h3 { font-size: 20px; line-height: 1.2; font-weight: 800; letter-spacing: 0; mar
 .mood-head h1 { margin-bottom: 2px; }
 .mood-emoji { font-size: 42px; line-height: 1; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.day-strip {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  margin: 0 -16px;
+  padding: 0 16px 4px;
+  scrollbar-width: none;
+}
+.day-strip::-webkit-scrollbar { display: none; }
 .chip {
   padding: 10px 16px;
   border-radius: 999px;
@@ -218,6 +226,18 @@ h3 { font-size: 20px; line-height: 1.2; font-weight: 800; letter-spacing: 0; mar
   color: var(--text);
 }
 .chip.is-on { background: var(--mood); color: var(--ink); border-color: transparent; }
+.day-chip {
+  flex: 0 0 auto;
+  min-width: 86px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  border-radius: var(--radius);
+  padding: 10px 12px;
+}
+.day-title { font-size: 14px; font-weight: 800; line-height: 1.15; }
+.day-date { color: var(--muted); font-size: 12px; margin-top: 3px; }
+.day-chip.is-on .day-date { color: color-mix(in srgb, var(--ink) 76%, transparent); }
 .switch-row {
   width: 100%;
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
