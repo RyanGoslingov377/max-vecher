@@ -46,7 +46,13 @@ def resolve_day(day: str, now: datetime) -> date:
         return today + timedelta(days=1)
     if day == "saturday":
         return today + timedelta(days=(5 - today.weekday()) % 7)
-    raise ValueError(f"Неизвестный день: {day}")
+    try:
+        target = date.fromisoformat(day)
+    except ValueError:
+        raise ValueError(f"Неизвестный день: {day}") from None
+    if target < today or target > today + timedelta(days=6):
+        raise ValueError("Дата должна быть в ближайшие 7 дней")
+    return target
 
 
 def starts_at(event: dict) -> datetime | None:
@@ -120,8 +126,12 @@ def pick(
         }
         for event in pool
     ]
-    # Дешёвые выше дорогих (если включён бюджет), потом ближе по осям, потом раньше начало
-    results.sort(key=lambda r: (r["over_budget"], r["score"], _start_sort_key(r["event"])))
+    # С бюджетом всё ещё главным остаётся настроение; при равной близости недорогие платные
+    # события идут выше бесплатных маршрутов, чтобы режим не превращался в «только бесплатно».
+    if budget_on:
+        results.sort(key=lambda r: (r["over_budget"], r["score"], _budget_price_rank(r["event"]), _start_sort_key(r["event"])))
+    else:
+        results.sort(key=lambda r: (r["score"], _start_sort_key(r["event"])))
     return results[:limit]
 
 
@@ -139,3 +149,12 @@ def pick_wild(events: list[dict], day: date, *, budget_on: bool, now: datetime, 
 def _start_sort_key(event: dict) -> float:
     start = starts_at(event)
     return start.timestamp() if start else math.inf  # «в любое время» — после событий с точным временем
+
+
+def _budget_price_rank(event: dict) -> int:
+    price = event["price"]
+    if 0 < price <= BUDGET_MAX:
+        return 0
+    if price == 0:
+        return 1
+    return 2

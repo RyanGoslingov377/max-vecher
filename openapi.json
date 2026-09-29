@@ -34,7 +34,7 @@
           "подбор"
         ],
         "summary": "Api Pick",
-        "description": "Три события под настроение. Пример: /api/pick?mood=charged&day=saturday&budget=1",
+        "description": "Три события под настроение. Пример: /api/pick?mood=charged&day=2026-10-05&budget=1",
         "operationId": "api_pick_api_pick_get",
         "parameters": [
           {

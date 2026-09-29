@@ -17,11 +17,6 @@ const MOODS = [
 ];
 const moodById = (id) => MOODS.find((mood) => mood.id === id);
 
-const DAYS = [
-  { id: "today", title: "Сегодня" },
-  { id: "tomorrow", title: "Завтра" },
-  { id: "saturday", title: "В субботу" },
-];
 const BUDGET_MAX = 300; // как в server/picker.py
 const ANSWERS = [
   { id: "going", title: "Иду" },
@@ -30,12 +25,37 @@ const ANSWERS = [
 ];
 const POLL_MS = 4000; // как часто обновлять счётчик ответов
 const TZ = "Europe/Moscow"; // Казань живёт по московскому времени
+const DAY_MS = 864e5;
+
+const dayKey = (date) => date.toLocaleDateString("en-CA", { timeZone: TZ }); // 2026-09-26
+
+function weekDays() {
+  const now = new Date();
+  return Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(now.getTime() + index * DAY_MS);
+    const title = index === 0
+      ? "Сегодня"
+      : index === 1
+        ? "Завтра"
+        : date.toLocaleDateString("ru-RU", { weekday: "short", timeZone: TZ });
+    return {
+      id: dayKey(date),
+      title,
+      date: date.toLocaleDateString("ru-RU", { day: "numeric", month: "short", timeZone: TZ }).replace(".", ""),
+    };
+  });
+}
+
+function dayTitle(id) {
+  const day = weekDays().find((item) => item.id === id);
+  return day ? `${day.title}, ${day.date}` : id;
+}
 
 const state = {
   screen: "mood", // mood → setup → results → plan → invite
   history: [], // откуда пришли — для кнопки «Назад»
   mood: null,
-  day: "today",
+  day: dayKey(new Date()),
   budget: false,
   loading: false,
   error: null,
@@ -185,8 +205,6 @@ function esc(value) {
   return String(value ?? "").replace(/[&<>"']/g, (ch) => `&#${ch.charCodeAt(0)};`);
 }
 
-const dayKey = (date) => date.toLocaleDateString("en-CA", { timeZone: TZ }); // 2026-09-26
-
 function whenLabel(event) {
   if (!event.starts_at) return "В любое время";
   const start = new Date(event.starts_at);
@@ -214,7 +232,7 @@ function hasChat() {
 const BACK_ICON = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>`;
 
-function header({ backButton = true, title = "Вечер", extra = "" } = {}) {
+function header({ backButton = true, title = "Вайб", extra = "" } = {}) {
   // Внутри МАКС «Назад» — системная кнопка сверху, свою рисуем только в браузере
   const showBack = backButton && !inMax;
   return `
@@ -237,20 +255,23 @@ function moodScreen() {
   ).join("");
   return `
     ${header({ backButton: false, extra: `<span class="chip-city">Казань</span>` })}
-    <section class="screen">
-      <h1>Какое у тебя настроение?</h1>
-      <p class="lead">Выбери одно — подберём три варианта на вечер, а не сто.</p>
+    <section class="screen mood-picker">
+      <div class="intro">
+        <h1>Какое у тебя настроение?</h1>
+        <p class="lead">Подберём три варианта под твой вайб в Казани, а не бесконечную афишу.</p>
+      </div>
       <div class="tiles">${tiles}</div>
-      <p class="note">Демо: события, даты и цены условные.</p>
+      <p class="note">В подборе есть события из афиши и регулярные вечерние активности по реальным местам.</p>
     </section>`;
 }
 
 function setupScreen() {
   const mood = moodById(state.mood);
-  const days = DAYS.map(
+  const days = weekDays().map(
     (day) => `
-      <button class="chip ${state.day === day.id ? "is-on" : ""}" data-action="day" data-id="${day.id}">
-        ${day.title}
+      <button class="chip day-chip ${state.day === day.id ? "is-on" : ""}" data-action="day" data-id="${day.id}">
+        <span class="day-title">${day.title}</span>
+        <span class="day-date">${day.date}</span>
       </button>`
   ).join("");
   return `
@@ -262,7 +283,7 @@ function setupScreen() {
           <h1>${mood.title}</h1>
         </div>
         <h2>Когда?</h2>
-        <div class="chips">${days}</div>
+        <div class="chips day-strip">${days}</div>
         <h2>Деньги</h2>
         <button class="switch-row" data-action="budget" role="switch" aria-checked="${state.budget}">
           <span>
@@ -325,7 +346,7 @@ function resultsScreen() {
     ${header()}
     <section class="screen" style="--mood:${mood.color};--ink:${mood.ink}">
       <h1>${mood.emoji} ${mood.title}</h1>
-      <p class="lead">${DAYS.find((d) => d.id === state.day).title}${state.budget ? ` · до ${BUDGET_MAX} ₽` : ""}</p>
+      <p class="lead">${dayTitle(state.day)}${state.budget ? ` · до ${BUDGET_MAX} ₽` : ""}</p>
       ${body}
     </section>
     <div class="bar">
@@ -339,9 +360,14 @@ function planScreen() {
   const chat = hasChat();
   const ticket = event.ticket_url
     ? `<button class="btn btn-ghost" data-action="ticket">Билеты на сайте организатора ↗</button>`
-    : `<div class="ticket-demo" role="note">
-        <span class="ticket-demo-title">Билеты в демо</span>
-        <span class="ticket-demo-text">У события нет ссылки на продажу. Для защиты показываем план и приглашение, а покупку честно помечаем как смоделированную.</span>
+    : event.price === 0 || event.anytime
+      ? `<div class="ticket-demo" role="note">
+        <span class="ticket-demo-title">Билеты не нужны</span>
+        <span class="ticket-demo-text">Это бесплатный городской маршрут или открытая вечерняя активность. Просто договоритесь о времени.</span>
+      </div>`
+      : `<div class="ticket-demo" role="note">
+        <span class="ticket-demo-title">Оплата не подключена</span>
+        <span class="ticket-demo-text">В MVP покупка билетов не подключена. Следующий шаг — партнёрская касса или ссылка на оплату у организатора.</span>
       </div>`;
   return `
     ${header({ title: "План" })}
@@ -362,7 +388,7 @@ function planScreen() {
       <p class="bar-hint">${
         chat
           ? "Бот пришлёт в чат карточку «Иду / Может / Не могу»"
-          : "Бот пришлёт карточку тебе в чат с ним — её можно переслать друзьям"
+          : "Карточка уйдёт тебе в личный чат с ботом. Групповое голосование включим, когда МАКС разрешит ботов в группах"
       }</p>
       <button class="btn btn-accent" data-action="invite" ${state.loading ? "disabled" : ""}>
         ${state.loading ? "Отправляем…" : chat ? "Позвать чат" : "Отправить себе"}

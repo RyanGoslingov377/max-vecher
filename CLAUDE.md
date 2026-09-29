@@ -86,7 +86,7 @@ server/config.py    настройки из .env
 server/schemas.py   форматы ответов API (для OpenAPI)
 server/export_openapi.py  сохранить openapi.json
 web/                мини-приложение (index.html, styles.css, app.js, api.js)
-data/events.json    33 синтетических события (демо), в основном регулярные
+data/events.json    71 событие: разовые из казанской афиши + weekly/anytime активности по реальным местам
 openapi.json        описание API (генерируется), DATA-API.yaml — API для экспертов
 tests/              pytest
 ```
@@ -103,7 +103,7 @@ tests/              pytest
 | `GET /api/invites/{id}` | `{invite_id, event, answers: [{name, answer}]}` — для живого счётчика, опрашивать раз в 3–5 сек | работает |
 | `GET /api/stats` | `{going, went, rate}` — метрика «сходили ÷ собирались», без подписи | работает |
 
-- `mood`: charged, release, exhale, blue, learn, wild. `day`: today, tomorrow, saturday. `answer`: going, maybe, no.
+- `mood`: charged, release, exhale, blue, learn, wild. `day`: дата `YYYY-MM-DD` в ближайшие 7 дней; алиасы today, tomorrow, saturday сохранены. `answer`: going, maybe, no.
 - `event`: `id`, `title`, `place`, `starts_at` (ISO с `+03:00`) или `"anytime": true`, `price` (₽, 0 — бесплатно), `tags`, `nrg` и `dep` (0–2), `growth`, `why`, необязательный `ticket_url`.
 - Регулярные события: в `data/events.json` вместо даты — `"weekly": {"days": ["пт", "сб"], "time": "20:00"}`. `/api/pick` отдаёт их уже с датой выбранного дня (`starts_at`) и id вида `quiz@2026-10-02`; этот id фронт передаёт в `POST /api/invites` как есть. Для фронта id — просто строка.
 - `sent: false` — локально без токена: приглашение сохранено, но карточку отправить нечем. Это нормально для разработки фронта.
