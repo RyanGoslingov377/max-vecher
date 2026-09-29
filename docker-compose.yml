@@ -1,5 +1,5 @@
 # Запуск: docker compose up --build  → http://localhost:3000
-# Перед запуском: copy .env.example .env и впиши MAX_BOT_TOKEN
+# Перед запуском: copy .env.example .env (токен не нужен: по умолчанию BOT_ENABLED=0, бот работает на хостинге)
 services:
   app:
     build: .

@@ -1,3 +1,5 @@
+import asyncio
+
 import httpx
 import pytest
 from fastapi.testclient import TestClient
@@ -20,12 +22,17 @@ class FakeApi:
 
     def __init__(self, fail: bool = False):
         self.sent = []
+        self.answers = []
         self.fail = fail
 
     async def send_message(self, chat_id, text, buttons=None, *, user_id=None):
         if self.fail:
             raise httpx.HTTPError("бот не в чате")
         self.sent.append({"chat_id": chat_id, "user_id": user_id, "text": text, "buttons": buttons})
+        return {}
+
+    async def answer_callback(self, callback_id, *, text=None, buttons=None, notification=None):
+        self.answers.append({"text": text, "buttons": buttons, "notification": notification})
         return {}
 
 
@@ -130,3 +137,29 @@ def test_invite_chat_id_prefers_group_then_payload():
     assert invite_chat_id({"start_param": "chat-2"}) == -2
     assert invite_chat_id({"start_param": "что-то другое"}) is None
     assert invite_chat_id({}) is None
+
+
+def vote(invite_id: str, answer: str) -> dict:
+    """Нажатие кнопки на карточке — так его присылает МАКС."""
+    return {"update_type": "message_callback",
+            "callback": {"callback_id": "cb", "payload": f"vote:{invite_id}:{answer}",
+                         "user": {"user_id": 7, "first_name": "Петя"}}}
+
+
+def test_vote_button_updates_card(client, api):
+    invite_id = client.post("/api/invites", json={"event_id": "party"}).json()["invite_id"]
+    asyncio.run(bot.handle_update(api, vote(invite_id, "maybe")))
+    asyncio.run(bot.handle_update(api, vote(invite_id, "no")))  # Петя передумал
+    first, second = api.answers
+    assert first["notification"] == "Записал: Может"
+    assert "Может (1): Петя" in first["text"]
+    assert "Не могу (1): Петя" in second["text"]
+    assert "Может (0)" in second["text"]  # повторное нажатие меняет ответ, а не добавляет второй
+    assert [b["text"] for b in second["buttons"][0]] == ["Иду", "Может", "Не могу"]
+
+
+def test_vote_on_unknown_card_says_it_is_outdated(api):
+    asyncio.run(bot.handle_update(api, vote("nope", "going")))
+    [answer] = api.answers
+    assert answer["text"] is None  # карточку не трогаем, только всплывающее сообщение
+    assert "устарела" in answer["notification"]

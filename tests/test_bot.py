@@ -70,9 +70,9 @@ class RecordingApi:
         return {}
 
 
-def evening_update(chat_id: int) -> dict:
+def evening_update(chat_id: int, text: str = "/вечер") -> dict:
     return {"update_type": "message_created",
-            "message": {"sender": {"user_id": 7}, "recipient": {"chat_id": chat_id}, "body": {"text": "/вечер"}}}
+            "message": {"sender": {"user_id": 7}, "recipient": {"chat_id": chat_id}, "body": {"text": text}}}
 
 
 def test_evening_command_sends_open_app_button(monkeypatch):
@@ -91,3 +91,22 @@ def test_evening_falls_back_to_deeplink(monkeypatch):
     [button] = api.sent[1]["buttons"][0]
     assert button["type"] == "link"
     assert button["url"] == "https://max.ru/test_bot?startapp=chat-123"
+
+
+def test_start_sends_help_with_open_app_button(monkeypatch):
+    monkeypatch.setattr(bot, "status", {"username": "test_bot", "user_id": 99, "last_poll": None})
+    api = RecordingApi()
+    asyncio.run(bot.handle_update(api, evening_update(5, "/start")))
+    [message] = api.sent
+    assert message["text"] == bot.HELP_TEXT
+    assert message["buttons"][0][0]["type"] == "open_app"  # не нужно набирать /вечер
+
+
+def test_bot_started_sends_open_app_button(monkeypatch):
+    # Эксперт нажал «Начать» в личке с ботом — сразу видит кнопку мини-приложения
+    monkeypatch.setattr(bot, "status", {"username": "test_bot", "user_id": 99, "last_poll": None})
+    api = RecordingApi()
+    asyncio.run(bot.handle_update(api, {"update_type": "bot_started", "chat_id": 5}))
+    [button] = api.sent[0]["buttons"][0]
+    assert button["type"] == "open_app"
+    assert button["payload"] == "chat5"
