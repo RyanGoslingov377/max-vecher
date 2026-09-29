@@ -214,7 +214,7 @@ function hasChat() {
 const BACK_ICON = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>`;
 
-function header({ backButton = true, title = "Вечер", extra = "" } = {}) {
+function header({ backButton = true, title = "Вайб", extra = "" } = {}) {
   // Внутри МАКС «Назад» — системная кнопка сверху, свою рисуем только в браузере
   const showBack = backButton && !inMax;
   return `
@@ -238,8 +238,8 @@ function moodScreen() {
   return `
     ${header({ backButton: false, extra: `<span class="chip-city">Казань</span>` })}
     <section class="screen">
-      <h1>Выбери вайб вечера</h1>
-      <p class="lead">Настроение — это фильтр: покажем три живых варианта по Казани, а не бесконечную афишу.</p>
+      <h1>Какое у тебя настроение?</h1>
+      <p class="lead">Подберём три варианта под твой вайб в Казани, а не бесконечную афишу.</p>
       <div class="tiles">${tiles}</div>
       <p class="note">В подборе есть события из афиши и регулярные вечерние активности по реальным местам.</p>
     </section>`;
@@ -339,9 +339,14 @@ function planScreen() {
   const chat = hasChat();
   const ticket = event.ticket_url
     ? `<button class="btn btn-ghost" data-action="ticket">Билеты на сайте организатора ↗</button>`
-    : `<div class="ticket-demo" role="note">
-        <span class="ticket-demo-title">Билеты в демо</span>
-        <span class="ticket-demo-text">У события нет ссылки на продажу. Для защиты показываем план и приглашение, а покупку честно помечаем как смоделированную.</span>
+    : event.price === 0 || event.anytime
+      ? `<div class="ticket-demo" role="note">
+        <span class="ticket-demo-title">Билеты не нужны</span>
+        <span class="ticket-demo-text">Это бесплатный городской маршрут или открытая вечерняя активность. Просто договоритесь о времени.</span>
+      </div>`
+      : `<div class="ticket-demo" role="note">
+        <span class="ticket-demo-title">Оплата не подключена</span>
+        <span class="ticket-demo-text">В приложении нет покупки билетов. Используем событие как вариант плана, а билет проверяйте у организатора.</span>
       </div>`;
   return `
     ${header({ title: "План" })}
@@ -362,7 +367,7 @@ function planScreen() {
       <p class="bar-hint">${
         chat
           ? "Бот пришлёт в чат карточку «Иду / Может / Не могу»"
-          : "Бот пришлёт карточку тебе в личный чат. Для общего голосования открой мини-приложение из группового чата, когда МАКС разрешит добавлять бота в группы"
+          : "Карточка уйдёт тебе в личный чат с ботом. Групповое голосование включим, когда МАКС разрешит ботов в группах"
       }</p>
       <button class="btn btn-accent" data-action="invite" ${state.loading ? "disabled" : ""}>
         ${state.loading ? "Отправляем…" : chat ? "Позвать чат" : "Отправить себе"}
