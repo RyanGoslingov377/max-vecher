@@ -86,7 +86,7 @@ server/config.py    настройки из .env
 server/schemas.py   форматы ответов API (для OpenAPI)
 server/export_openapi.py  сохранить openapi.json
 web/                мини-приложение (index.html, styles.css, app.js, api.js)
-data/events.json    66 событий: разовые из казанской афиши + weekly/anytime активности по реальным местам
+data/events.json    71 событие: разовые из казанской афиши + weekly/anytime активности по реальным местам
 openapi.json        описание API (генерируется), DATA-API.yaml — API для экспертов
 tests/              pytest
 ```

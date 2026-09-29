@@ -42,3 +42,4 @@ def test_budget_toggle_changes_real_data_results():
         assert [r["event"]["id"] for r in regular] != [r["event"]["id"] for r in budget], mood_id
         assert any(r["event"]["price"] > BUDGET_MAX for r in regular), mood_id
         assert budget[0]["event"]["price"] <= BUDGET_MAX, mood_id
+        assert any(0 < r["event"]["price"] <= BUDGET_MAX for r in budget), mood_id

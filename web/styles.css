@@ -210,11 +210,10 @@ h3 { font-size: 20px; line-height: 1.2; font-weight: 800; letter-spacing: 0; mar
 .mood-emoji { font-size: 42px; line-height: 1; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .day-strip {
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  margin: 0 -16px;
-  padding: 0 16px 4px;
-  scrollbar-width: none;
+  flex-wrap: wrap;
+  overflow: visible;
+  margin: 0;
+  padding: 0;
 }
 .day-strip::-webkit-scrollbar { display: none; }
 .chip {
@@ -227,8 +226,8 @@ h3 { font-size: 20px; line-height: 1.2; font-weight: 800; letter-spacing: 0; mar
 }
 .chip.is-on { background: var(--mood); color: var(--ink); border-color: transparent; }
 .day-chip {
-  flex: 0 0 auto;
-  min-width: 86px;
+  flex: 1 1 calc(25% - 8px);
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: flex-start;

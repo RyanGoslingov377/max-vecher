@@ -126,8 +126,12 @@ def pick(
         }
         for event in pool
     ]
-    # Дешёвые выше дорогих (если включён бюджет), потом ближе по осям, потом раньше начало
-    results.sort(key=lambda r: (r["over_budget"], r["score"], _start_sort_key(r["event"])))
+    # С бюджетом всё ещё главным остаётся настроение; при равной близости недорогие платные
+    # события идут выше бесплатных маршрутов, чтобы режим не превращался в «только бесплатно».
+    if budget_on:
+        results.sort(key=lambda r: (r["over_budget"], r["score"], _budget_price_rank(r["event"]), _start_sort_key(r["event"])))
+    else:
+        results.sort(key=lambda r: (r["score"], _start_sort_key(r["event"])))
     return results[:limit]
 
 
@@ -145,3 +149,12 @@ def pick_wild(events: list[dict], day: date, *, budget_on: bool, now: datetime, 
 def _start_sort_key(event: dict) -> float:
     start = starts_at(event)
     return start.timestamp() if start else math.inf  # «в любое время» — после событий с точным временем
+
+
+def _budget_price_rank(event: dict) -> int:
+    price = event["price"]
+    if 0 < price <= BUDGET_MAX:
+        return 0
+    if price == 0:
+        return 1
+    return 2
