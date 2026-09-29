@@ -367,7 +367,7 @@ function planScreen() {
       </div>`
       : `<div class="ticket-demo" role="note">
         <span class="ticket-demo-title">Оплата не подключена</span>
-        <span class="ticket-demo-text">В приложении нет покупки билетов. Используем событие как вариант плана, а билет проверяйте у организатора.</span>
+        <span class="ticket-demo-text">В MVP покупка билетов не подключена. Следующий шаг — партнёрская касса или ссылка на оплату у организатора.</span>
       </div>`;
   return `
     ${header({ title: "План" })}
