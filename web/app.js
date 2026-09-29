@@ -237,9 +237,11 @@ function moodScreen() {
   ).join("");
   return `
     ${header({ backButton: false, extra: `<span class="chip-city">Казань</span>` })}
-    <section class="screen">
-      <h1>Какое у тебя настроение?</h1>
-      <p class="lead">Подберём три варианта под твой вайб в Казани, а не бесконечную афишу.</p>
+    <section class="screen mood-picker">
+      <div class="intro">
+        <h1>Какое у тебя настроение?</h1>
+        <p class="lead">Подберём три варианта под твой вайб в Казани, а не бесконечную афишу.</p>
+      </div>
       <div class="tiles">${tiles}</div>
       <p class="note">В подборе есть события из афиши и регулярные вечерние активности по реальным местам.</p>
     </section>`;
