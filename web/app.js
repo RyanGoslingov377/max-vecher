@@ -239,9 +239,9 @@ function moodScreen() {
     ${header({ backButton: false, extra: `<span class="chip-city">Казань</span>` })}
     <section class="screen">
       <h1>Какое у тебя настроение?</h1>
-      <p class="lead">Выбери одно — подберём три варианта на вечер, а не сто.</p>
+      <p class="lead">Выбери настроение — покажем три живых варианта по Казани без бесконечной афиши.</p>
       <div class="tiles">${tiles}</div>
-      <p class="note">Демо: события, даты и цены условные.</p>
+      <p class="note">Подбор зависит от дня, бюджета и выбранного настроения.</p>
     </section>`;
 }
 
