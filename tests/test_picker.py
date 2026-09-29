@@ -74,6 +74,15 @@ def test_day_filter():
     assert "sat-morning" not in found
 
 
+def test_two_sessions_of_one_show_take_one_place():
+    early = event("show-18", 0, 2, ["кино"], starts_at="2026-09-26T18:00:00+03:00") | {"title": "Спектакль"}
+    late = event("show-20", 0, 2, ["кино"], starts_at="2026-09-26T20:00:00+03:00") | {"title": "Спектакль"}
+    found = ids(pick(EVENTS + [early, late], "blue", SATURDAY, now=NOW))
+    assert "show-18" in found  # остаётся ранний сеанс
+    assert "show-20" not in found
+    assert len(found) == 3
+
+
 def test_wild_gives_three_different_events():
     results = pick(EVENTS, "wild", SATURDAY, now=NOW, rng=random.Random(1))
     assert len(results) == 3

@@ -88,7 +88,7 @@ def on_day(event: dict, day: date) -> dict:
     """Регулярное событие → конкретное: с датой этого дня и id вида «quiz@2026-10-02»."""
     if not event.get("weekly"):
         return event
-    return {**event, "id": f"{event['id']}@{day.isoformat()}", "starts_at": occurrence_on(event, day).isoformat()}  # началось больше часа назад — уже не предлагаем
+    return {**event, "id": f"{event['id']}@{day.isoformat()}", "starts_at": occurrence_on(event, day).isoformat()}
 
 
 def score(mood: Mood, event: dict) -> float:
@@ -132,18 +132,28 @@ def pick(
         results.sort(key=lambda r: (r["over_budget"], r["score"], _budget_price_rank(r["event"]), _start_sort_key(r["event"])))
     else:
         results.sort(key=lambda r: (r["score"], _start_sort_key(r["event"])))
-    return results[:limit]
+    return _one_per_title(results)[:limit]
 
 
 def pick_wild(events: list[dict], day: date, *, budget_on: bool, now: datetime, rng: random.Random) -> list[dict]:
-    results, seen_ids = [], set()
+    results, seen_titles = [], set()
     for mood_id in rng.sample(EMOTIONAL, 3):
         for result in pick(events, mood_id, day, budget_on=budget_on, now=now, limit=len(events)):
-            if result["event"]["id"] not in seen_ids:
-                seen_ids.add(result["event"]["id"])
+            if result["event"]["title"] not in seen_titles:
+                seen_titles.add(result["event"]["title"])
                 results.append(result)
                 break
     return results
+
+
+def _one_per_title(results: list[dict]) -> list[dict]:
+    """Один сеанс на название: два показа одного спектакля не занимают два места из трёх."""
+    seen, unique = set(), []
+    for result in results:
+        if result["event"]["title"] not in seen:
+            seen.add(result["event"]["title"])
+            unique.append(result)
+    return unique
 
 
 def _start_sort_key(event: dict) -> float:
